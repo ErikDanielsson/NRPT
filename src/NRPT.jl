@@ -15,6 +15,13 @@ include("explorers/slice_sampler.jl")
 include("log_potential/path_problem.jl")
 
 include("opt/stoch_opt.jl")
+include("opt/SGD_variants/SGD.jl")
+include("opt/SGD_variants/DoG.jl")
+include("opt/SGD_variants/DoWG.jl")
+include("opt/SGD_variants/Adam.jl")
+include("opt/SGD_variants/Adagrad.jl")
+include("opt/SGD_variants/ScaledAdagrad.jl")
+
 include("opt/proximal_operators.jl")
 include("opt/optimizers.jl")
 include("opt/path_optimization.jl")
