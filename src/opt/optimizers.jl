@@ -1,0 +1,31 @@
+abstract type Optimizer end
+
+struct NoOptState <: Optimizer end
+
+init(problem, state::NoOptState) = state 
+step!(x, g, state::NoOptState) = 0.0
+
+struct ProximalStochOptState{S <: StochOptState, P <: ProximalState, T}  <: Optimizer
+    stochOptState::S
+    proximalState::P
+    xs::Vector{T}
+    etas::Vector{Float64}
+end
+
+ProximalStochOptState(s, p) = ProximalStochOptState(s, p, [], Float64[])
+ProximalStochOptState(s) = ProximalStochOptState(s, NoProx())
+
+function init(problem::PathProblem{ParametrizedPath{P}, E}, state::ProximalStochOptState) where {P, E}
+    return ProximalStochOptState(init(problem, state.stochOptState), state.proximalState, [problem.path.params], Float64[])
+end
+
+function step!(x, g, state::ProximalStochOptState{S, P}) where {S, P}
+    # Take a gradient step
+    η = step!(x, g, state.stochOptState)
+    x = x - η * g
+    # Take a proximal step, this is typically a projection onto a feasible region
+    x = step!(x, state.proximalState)
+    push!(state.xs, x)
+    push!(state.etas, η)
+	return x
+end
