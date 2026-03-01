@@ -1,6 +1,6 @@
 ### ADAM
 
-struct ADAMState{T} <: StochOptState
+struct AdamState{T} <: StochOptState
     eta::Float64
     beta1::Float64
     beta2::Float64
@@ -10,12 +10,13 @@ struct ADAMState{T} <: StochOptState
     v::T
 end
 
-ADAMState(eta, beta1, beta2, eps, ::Float64) = ADAMState(eta, beta1, beta2, eps, 0.0, 0.0, 0.0)
-ADAMState(eta, beta1, beta2, eps, params0::Vector{Float64}) = ADAMState(
+AdamState(eta, beta1, beta2, eps) = AdamState(eta, beta1, beta2, eps, 0.0, nothing, nothing)
+AdamState(eta, beta1, beta2, eps, ::Float64) = AdamState(eta, beta1, beta2, eps, 0.0, 0.0, 0.0)
+AdamState(eta, beta1, beta2, eps, params0::Vector{Float64}) = AdamState(
     eta, beta1, beta2, eps, 0.0, zeros(size(params0)), zeros(size(params0))
 )
 
-function step!(x, g::T, state::ADAMState)
+function step!(x, g, state::AdamState)
     # Compute new state
     m_t = state.beta1 * state.m + (1 - state.beta1) * g
     v_t = state.beta2 * state.v + (1 - state.beta2) * g .^ 2
@@ -31,6 +32,6 @@ function step!(x, g::T, state::ADAMState)
 	return (state.eta, g_hat)
 end
 
-function init(::PathProblem{ParametrizedPath{P}, E}, state::ADAMState) where {P, E}
+function init(::PathProblem{<:ParametrizedPath, E}, state::AdamState{Nothing}) where {E}
     return state
 end
