@@ -8,7 +8,7 @@ function adapt_path!(problem::PathProblem{StaticPath, E}, x::Matrix{T}, schedule
 end
 
 # function adapt_path!(
-#     problem::PathProblem{ParametrizedPath{P}, E},
+#     problem::PathProblem{<:ParametrizedPath, E},
 #     x::Matrix{T},
 #     schedule,
 #     opt_state::ProximalStochOptState{S, Pr}
@@ -20,11 +20,11 @@ end
 # end
 
 function adapt_path!(
-    problem::PathProblem{ParametrizedPath{P}, E},
+    problem::PathProblem{<:ParametrizedPath, E},
     x::Matrix{T},
     schedule,
     opt_state::ProximalStochOptState{S, Pr}
-) where {T, P, E, S, Pr}
+) where {T, E, S, Pr}
     all_inds = eachindex(schedule)
     chunks = Iterators.partition(all_inds, cld(length(all_inds), Threads.nthreads()))
     tasks = map(chunks) do chunk
@@ -32,11 +32,12 @@ function adapt_path!(
     end
     partial_grads = fetch.(tasks)
     l, g = sum(partial_grads)
-    problem.path.params = step!(problem.path.params, g, opt_state)
+    new_param = step!(extract_param(problem.path), g, opt_state)
+    set_param!(problem.path, new_param)
     return l
 end
 
-function acc_grad(inds, path::ParametrizedPath{P}, x::Matrix{T}, schedule) where {P, T}
+function acc_grad(inds, path::P, x::Matrix{T}, schedule) where {P<:ParametrizedPath, T}
     l = sum(mcmc_loss(path, x, n, schedule) for n in inds)
     g = sum([mcmc_grad(path, x, n, schedule) for n in eachindex(schedule)])
     return [l, g]
@@ -44,14 +45,14 @@ end
 
 function ∇J(path::ParametrizedPath, n, schedule, x::T) where {T}
     if n == 1
-        return gradient(path, path.params, x, schedule[1]) - gradient(path, path.params, x, schedule[2])
+        return gradient(path, x, schedule[1]) - gradient(path, x, schedule[2])
     elseif n == length(schedule)
-        return gradient(path, path.params, x, schedule[end]) - gradient(path, path.params, x, schedule[end-1])
+        return gradient(path, x, schedule[end]) - gradient(path, x, schedule[end-1])
     else
         return (
-            2gradient(path, path.params, x, schedule[n])
-            - gradient(path, path.params, x, schedule[n+1])
-            - gradient(path, path.params, x, schedule[n-1])
+            2gradient(path, x, schedule[n])
+            - gradient(path, x, schedule[n+1])
+            - gradient(path, x, schedule[n-1])
         )
     end
 end
@@ -71,7 +72,7 @@ function J(path::ParametrizedPath, n, schedule, x::T) where {T}
 end
 
 function ∇W(path::ParametrizedPath, n, schedule, x::T) where {T}
-    return gradient(path, path.params, x, schedule[n]) 
+    return gradient(path, x, schedule[n]) 
 end
 
 function mcmc_loss(path::ParametrizedPath, x::Matrix{T}, n, schedule::Vector{Float64}) where {T}

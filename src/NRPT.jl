@@ -4,51 +4,64 @@ using Distributions, Random, LinearAlgebra, Interpolations, ProgressMeter, ADTyp
 import DifferentiationInterface
 
 include("helpers.jl")
+
+# Sampling problems
 include("log_potential/sampling_problems.jl")
+export SamplingProblem
+
+# Path types
 include("log_potential/paths.jl")
-
-include("evidence/stepping_stone.jl")
-include("explorers/explorers.jl")
-include("explorers/mh_kernels.jl")
-include("explorers/slice_sampler.jl")
-
-include("log_potential/path_problem.jl")
-
-include("opt/stoch_opt.jl")
-include("opt/SGD_variants/SGD.jl")
-include("opt/SGD_variants/DoG.jl")
-include("opt/SGD_variants/DoWG.jl")
-include("opt/SGD_variants/Adam.jl")
-include("opt/SGD_variants/Adagrad.jl")
-include("opt/SGD_variants/ScaledAdagrad.jl")
-
-include("opt/proximal_operators.jl")
-include("opt/optimizers.jl")
-include("opt/path_optimization.jl")
-
-include("stats/barriers.jl")
-include("stats/stats.jl")
-
-include("DEO.jl")
-include("nrpt.jl")
+export get_exponents, extract_params 
+include("log_potential/paths/LinearPath.jl")
+export LinearPath
+include("log_potential/paths/PowerPath.jl")
+export PowerPath
+include("log_potential/paths/QPath.jl")
+export QPath
+include("log_potential/paths/PaperSplinePath.jl")
+export PaperSplinePath
 
 # Explorers
-export MHExplorer, SliceSampler, IterExplorer
-export make_q_mala, make_q_grw
+include("explorers/explorers.jl")
+export IterExplorer
+include("explorers/mh_kernels.jl")
+export MHExplorer, make_q_mala, make_q_grw
+include("explorers/slice_sampler.jl")
+export SliceSampler
 
-# Problems and choices of paths
-export SamplingProblem, PathProblem, linear_path, power_path, q_path, spline_path
-export linear_spline, theta_to_eta
+# Path problem 
+include("log_potential/path_problem.jl")
+export PathProblem
+
+# Optimization
+include("opt/stoch_opt.jl")
+include("opt/SGD_variants/SGD.jl")
+export SGDState
+include("opt/SGD_variants/DoG.jl")
+export DoGState
+include("opt/SGD_variants/DoWG.jl")
+export DoWGState
+include("opt/SGD_variants/Adam.jl")
+export AdamState
+include("opt/SGD_variants/Adagrad.jl")
+export AdagradState
+include("opt/SGD_variants/ScaledAdagrad.jl")
+export ScaledAdagradState
+include("opt/proximal_operators.jl")
+export ProximalState, ProjectionState, Box, project
+include("opt/optimizers.jl")
+export ProximalStochOptState, NoOptState
+include("opt/path_optimization.jl")
 
 # Statistics
+include("stats/barriers.jl")
+include("stats/stepping_stone.jl")
+include("stats/stats.jl")
 export round_trip_rate, count_chain_round_trips, count_round_trips_per_round
 
-# Optimizaton
-export ProximalStochOptState, NoOptState
-export ProximalState, ProjectionState, Box, project
-export SGDState, DoGState, DoWGState
-
 # Main algorithm
+include("DEO.jl")
+include("nrpt.jl")
 export nrpt, optimized_nrpt
 
 

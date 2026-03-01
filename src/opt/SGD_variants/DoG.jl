@@ -9,9 +9,10 @@ end
 
 DoGState(reps_rel, eps) = DoGState(nothing, 0.0, reps_rel, nothing, eps)
 
-function init(problem::PathProblem{ParametrizedPath{P}, E}, state::DoGState{Nothing}) where {P, E}
-    max_dist = state.reps_rel * (1 + sqrt(norm2(problem.path.params)))
-    return DoGState(problem.path.params, 0.0, state.reps_rel, max_dist, state.eps)
+function init(problem::PathProblem{<:ParametrizedPath, E}, state::DoGState{Nothing}) where {E}
+    param0 = extract_param(problem.path)
+    max_dist = state.reps_rel * (1 + sqrt(norm2(param0)))
+    return DoGState(param0, 0.0, state.reps_rel, max_dist, state.eps)
 end
 
 function step!(x, g, state::DoGState)

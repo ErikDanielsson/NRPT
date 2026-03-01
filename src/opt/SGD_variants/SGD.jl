@@ -7,6 +7,6 @@ function step!(x, g, state::SGDState)
 	return (state.eta, g)
 end
 
-function init(::PathProblem{ParametrizedPath{P}, E}, state::SGDState) where {P, E}
+function init(::PathProblem{<:ParametrizedPath, E}, state::SGDState) where {E}
     return state
 end

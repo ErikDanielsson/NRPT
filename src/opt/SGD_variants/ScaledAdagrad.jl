@@ -11,8 +11,9 @@ ScaledAdaGradState(eta::Float64, eps::Float64, scaler) = ScaledAdaGradState(eta,
 ScaledAdaGradState(eta::Float64, eps::Float64, ::Float64, scaler) = ScaledAdaGradState(eta, eps, 0.0, scaler)
 ScaledAdaGradState(eta::Float64, eps::Float64, params0::Vector{Float64}, scaler) = ScaledAdaGradState(eta, eps, zeros(size(params0)), scaler)
 
-function init(problem::PathProblem{ParametrizedPath{P}, E}, state::ScaledAdaGradState{Nothing}) where {P, E}
-    return ScaledAdaGradState(state.eta, state.eps, problem.path.params, state.scaler)
+function init(problem::PathProblem{<:ParametrizedPath, E}, state::ScaledAdaGradState{Nothing}) where {E}
+    init_acc_grad = zeros(size(extract_param(problem.path)))
+    return ScaledAdaGradState(state.eta, state.eps, init_acc_grad, state.scaler)
 end
 
 function step!(x, g, state::ScaledAdaGradState)

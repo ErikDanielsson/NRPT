@@ -15,14 +15,14 @@ end
 ProximalStochOptState(s, p) = ProximalStochOptState(s, p, [], Float64[])
 ProximalStochOptState(s) = ProximalStochOptState(s, NoProx())
 
-function init(problem::PathProblem{ParametrizedPath{P}, E}, state::ProximalStochOptState) where {P, E}
-    return ProximalStochOptState(init(problem, state.stochOptState), state.proximalState, [problem.path.params], Float64[])
+function init(problem::PathProblem{<:ParametrizedPath, E}, state::ProximalStochOptState) where {E}
+    return ProximalStochOptState(init(problem, state.stochOptState), state.proximalState, [extract_param(problem.path)], Float64[])
 end
 
 function step!(x, g, state::ProximalStochOptState{S, P}) where {S, P}
     # Take a gradient step
-    η = step!(x, g, state.stochOptState)
-    x = x - η * g
+    η, g_hat = step!(x, g, state.stochOptState)
+    x = x - η * g_hat
     # Take a proximal step, this is typically a projection onto a feasible region
     x = step!(x, state.proximalState)
     push!(state.xs, x)

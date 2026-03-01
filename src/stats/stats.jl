@@ -35,7 +35,7 @@ function count_round_trips_per_round(ind_proc::Matrix{Int}, n_rounds)
 		ends = count_chain_round_trips(ind_proc, i)[2]
 		for (_, e, _) in ends
 			r = div(e, iters_per_round)
-			rts[r] += 1
+			rts[r+1] += 1
 		end
 	end
 	return rts

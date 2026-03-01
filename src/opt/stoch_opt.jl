@@ -1,6 +1,6 @@
 abstract type StochOptState end
 
-function init(::PathProblem{StaticPath, E}, opt_state::StochOptState) where {E}
+function init(::PathProblem{<:StaticPath, E}, opt_state::StochOptState) where {E}
     @warn "You are trying to optimize a static path! Ignoring optimizer"
     return opt_state
 end
