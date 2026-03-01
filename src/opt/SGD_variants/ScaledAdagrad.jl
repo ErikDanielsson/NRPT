@@ -1,22 +1,22 @@
-### Scaled AdaGrad (used in Syed et al. 2021) when parameters are transformed to log-scale
+### Scaled Adagrad (used in Syed et al. 2021) when parameters are transformed to log-scale
 
-mutable struct ScaledAdaGradState{S} <: StochOptState
+mutable struct ScaledAdagradState{S} <: StochOptState
     eta::Float64
     eps::Float64
     acc_grad::S
     param_scaler
 end
 
-ScaledAdaGradState(eta::Float64, eps::Float64, scaler) = ScaledAdaGradState(eta, eps, nothing, scaler)
-ScaledAdaGradState(eta::Float64, eps::Float64, ::Float64, scaler) = ScaledAdaGradState(eta, eps, 0.0, scaler)
-ScaledAdaGradState(eta::Float64, eps::Float64, params0::Vector{Float64}, scaler) = ScaledAdaGradState(eta, eps, zeros(size(params0)), scaler)
+ScaledAdagradState(eta::Float64, eps::Float64, scaler) = ScaledAdagradState(eta, eps, nothing, scaler)
+ScaledAdagradState(eta::Float64, eps::Float64, ::Float64, scaler) = ScaledAdagradState(eta, eps, 0.0, scaler)
+ScaledAdagradState(eta::Float64, eps::Float64, params0::Vector{Float64}, scaler) = ScaledAdagradState(eta, eps, zeros(size(params0)), scaler)
 
-function init(problem::PathProblem{<:ParametrizedPath, E}, state::ScaledAdaGradState{Nothing}) where {E}
+function init(problem::PathProblem{<:ParametrizedPath, E}, state::ScaledAdagradState{Nothing}) where {E}
     init_acc_grad = zeros(size(extract_param(problem.path)))
-    return ScaledAdaGradState(state.eta, state.eps, init_acc_grad, state.scaler)
+    return ScaledAdagradState(state.eta, state.eps, init_acc_grad, state.scaler)
 end
 
-function step!(x, g, state::ScaledAdaGradState)
+function step!(x, g, state::ScaledAdagradState)
     # Scale the gradient with its abosolute value
     # and some function of the parameter
     g = g / (abs.(g) + state.scaler.(x))
