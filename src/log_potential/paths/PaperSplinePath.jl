@@ -1,48 +1,39 @@
-mutable struct PaperSplinePath{T<:AbstractArray} <: ParametrizedPath{T}
+mutable struct PaperSplinePath{T<:AbstractArray, P<:SamplingProblem} <: ParametrizedPath{T, P}
     theta::T
 	log_potential::Function
     prep
-    sample_iid::Function
     backend::AbstractADType
+    problem::P
 end
 
-function params_to_knots(params::AbstractVector, increasing::Bool)
-    summed = [0; cumsum(exp.(params))]
-    knots = summed / summed[end]
+get_problem(path::PaperSplinePath) = path.problem
+
+function params_to_knots_paper_spline_path(params::AbstractVector, increasing::Bool)
+    knots = exp.(params)
     return increasing ? knots : 1. .- knots
 end
 
-function theta_to_eta(theta, increasing::Vector{Bool})
-    n_knots = div(length(theta), 2)
-    theta_ = reshape(theta, 2, n_knots)
-    eta = stack(map(((r, i),) -> params_to_knots(r, i), zip(eachrow(theta_), increasing)), dims=1)
-    return eta
+function get_exponents_paper_spline_path(theta::AbstractArray, β) 
+    return linear_spline(
+        theta_to_eta(theta, [false, true], 2, params_to_knots_paper_spline_path),
+        β
+    )
 end
 
-function linear_spline(eta, β::Float64)
-    if β == 0.0
-        return eta[:, 1]
-    else
-        K = size(eta, 2) - 1
-        k = ceil(Int, K * β)
-        return eta[:, k] * (k - K * β) + eta[:, k+1] * (K * β - k + 1)
-    end
-end
 
 function PaperSplinePath(n_knots::Int, x0, problem::SamplingProblem, backend::AbstractADType)
     theta0 = ones(2 * n_knots)
 
     function __log_potential(theta, x, β)
-        eta = theta_to_eta(theta, [false, true])
-        l1, l2 = linear_spline(eta, β)
-        return -l1 * problem.V0(x) - l2 * problem.V1(x)
+        e1, e2 = get_exponents_paper_spline_path(theta, β)
+        return -e1 * V0(problem, x) - e2 * V1(problem, x)
     end
 
     prep = prepare_path_gradient(__log_potential, theta0, x0, backend)
-    return PaperSplinePath(theta0, __log_potential, prep, problem.sample_iid, backend)
+    return PaperSplinePath(theta0, __log_potential, prep, backend, problem)
 end
 
-sample_iid(path::PaperSplinePath) = path.sample_iid()
+sample_iid(path::PaperSplinePath) = sample_iid(path.problem)
 
 function log_potential(path::PaperSplinePath, x, β)
     return path.log_potential(path.theta, x, β)

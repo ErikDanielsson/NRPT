@@ -117,6 +117,7 @@ function optimized_nrpt(
         :rejections => rejections,
         :logZsf => logZsf,
         :logZsb => logZsb,
+        :problem => problem
     ])
 end
 

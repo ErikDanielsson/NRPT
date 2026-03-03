@@ -1,20 +1,22 @@
-struct PowerPath{T<:Real} <: ParametrizedPath{T}
+mutable struct PowerPath{T<:Real,P<:SamplingProblem} <: ParametrizedPath{T, P}
     t::T
 	log_potential::Function
     prep
-    sample_iid::Function
     backend::AbstractADType
+    problem::P
 end
+
+get_problem(path::PowerPath) = path.problem
 
 function PowerPath(t0::T, x0, problem::SamplingProblem, backend::AbstractADType) where {T <: Real}
     function __log_potential(t, x, β)
-        return -((1 - β)^t * problem.V0(x) + β^t * problem.V1(x))
+        return -((1 - β)^t * V0(problem, x) + β^t * V1(problem, x))
     end
     prep = prepare_path_gradient(__log_potential, t0, x0, backend)
-    return PowerPath(t0, __log_potential, prep, problem.sample_iid, backend)
+    return PowerPath(t0, __log_potential, prep, backend, problem)
 end
 
-sample_iid(::PowerPath) = path.sample_iid()
+sample_iid(path::PowerPath) = sample_iid(path.problem)
 
 function log_potential(path::PowerPath, x, β)
     return path.log_potential(path.t, x, β)

@@ -1,14 +1,15 @@
-abstract type Path end
+abstract type Path{P<:SamplingProblem} end
 
 log_potential(::Path, x, β) = throw(MethodError(log_potential, x, β))
+get_problem(::Path) = throw(MethodError(log_potential, x, β))
 
 # Get exponentens from a linear like path. This is only well defined
 # on certain paths, but is useful for sampling iid in exponential families
 get_exponents(::Path, β) = throw(MethodError(log_potential, β))
 
-abstract type StaticPath <: Path end
+abstract type StaticPath{P<:SamplingProblem} <: Path{P} end
 
-abstract type ParametrizedPath{T} <: Path end
+abstract type ParametrizedPath{T, P<:SamplingProblem} <: Path{P} end
 
 gradient(::ParametrizedPath, x, β) = throw(MethodError(gradient, x, β))
 extract_param(::ParametrizedPath, x, β) = throw(MethodError(extract_param, x, β))
