@@ -7,7 +7,7 @@ include("helpers.jl")
 
 # Sampling problems
 include("log_potential/sampling_problems.jl")
-export SamplingProblem
+export PosteriorProblem, GenericDistributionProblem, NormalProblem
 
 # Path types
 include("log_potential/paths.jl")
@@ -18,8 +18,14 @@ include("log_potential/paths/PowerPath.jl")
 export PowerPath
 include("log_potential/paths/QPath.jl")
 export QPath
+
+include("log_potential/paths/spline-helpers.jl")
 include("log_potential/paths/PaperSplinePath.jl")
 export PaperSplinePath
+include("log_potential/paths/SplinePath.jl")
+export SplinePath
+include("log_potential/paths/SingleSplinePath.jl")
+export SingleSplinePath
 
 # Explorers
 include("explorers/explorers.jl")
@@ -28,6 +34,8 @@ include("explorers/mh_kernels.jl")
 export MHExplorer, make_q_mala, make_q_grw
 include("explorers/slice_sampler.jl")
 export SliceSampler
+include("explorers/iid_explorer.jl")
+export NormalIIDExplorer
 
 # Path problem 
 include("log_potential/path_problem.jl")

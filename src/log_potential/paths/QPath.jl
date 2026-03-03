@@ -1,10 +1,12 @@
-struct QPath{T<:Real} <: ParametrizedPath{T}
+mutable struct QPath{T<:Real, P<:SamplingProblem} <: ParametrizedPath{T, P}
     t::T
 	log_potential::Function
     prep
-    sample_iid::Function
     backend::AbstractADType
+    problem::P
 end
+
+get_problem(path::QPath) = path.problem
 
 # These are just to keep track of things if we come up with some better parametrization...
 function q_to_param(q)
@@ -18,12 +20,12 @@ end
 function QPath(q0::T, x0, problem::SamplingProblem, backend::AbstractADType) where {T <: Real}
     t0 = q_to_param(q0)
     function __log_potential(t, x, β)
-        q = param_to_q(param) 
+        q = param_to_q(t) 
         p = 1 - q
-        return logweightaddexp(1 - β, -p * problem.V0(x), β, -p * problem.V1(x)) / p
+        return logweightaddexp(1 - β, -p * V0(problem, x), β, -p * V1(problem, x)) / p
     end
     prep = prepare_path_gradient(__log_potential, t0, x0, backend)
-    return QPath(t0, __log_potential, prep, problem.sample_iid, backend) 
+    return QPath(t0, __log_potential, prep, backend, problem) 
 end
 
 function gradient(path::QPath, x, β)
