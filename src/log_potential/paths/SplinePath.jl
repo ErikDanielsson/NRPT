@@ -9,14 +9,15 @@ end
 get_problem(path::SplinePath) = path.problem
 
 function params_to_knots_spline_path(params::AbstractVector, increasing::Bool)
-    summed = [0; cumsum(exp.(params))]
+    rel_params = [params; 1.0]
+    summed = [0; cumsum(exp.(rel_params))]
     knots = summed / summed[end]
     return increasing ? knots : 1. .- knots
 end
 
 function get_exponents_spline_path(theta::AbstractArray, β) 
     return linear_spline(
-        theta_to_eta(theta, [false, true], 2, params_to_knots_spline_path),
+        theta_to_eta(theta, [false, true], params_to_knots_spline_path),
         β
     )
 end
