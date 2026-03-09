@@ -4,16 +4,15 @@
 
 abstract type IIDExplorer <: Explorer end
 
-function step(explorer::IIDExplorer, path::Path{<:DistributionProblem}, x, β) 
-    return iid_explore(explorer, path, β)
+function step(explorer::IIDExplorer, problem::PathProblem, x, β) 
+    return iid_explore(explorer, problem.path, problem.problem, β)
 end
 
 struct NormalIIDExplorer <: IIDExplorer end
 
-function iid_explore(::NormalIIDExplorer, path::Path{NormalProblem}, β)
-    prob = get_problem(path)
+function iid_explore(::NormalIIDExplorer, path::Path, problem::NormalProblem, β)
     η0, η1 = get_exponents(path, β)
-    σ2_β = (η0 / prob.σ0^2 + η1 / prob.σ1^2)^(-1)
-    μ_β = σ2_β * (η0 * prob.μ0 / prob.σ0^2 + η1 * prob.μ1 / prob.σ1^2)
+    σ2_β = (η0 / problem.σ0^2 + η1 / problem.σ1^2)^(-1)
+    μ_β = σ2_β * (η0 * problem.μ0 / problem.σ0^2 + η1 * problem.μ1 / problem.σ1^2)
     return rand(Normal(μ_β, sqrt(σ2_β)))   
 end

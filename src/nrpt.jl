@@ -27,7 +27,7 @@ function nrpt(
     for n = 1:length(all_iterations)
         iterations = all_iterations[n]
         # Run DEO
-        x_round, logZ, r, ind_proc, inds = DEO(x[:, end], inds, iterations, schedule, problem)
+        x_round, _, r, ind_proc, inds = DEO(x[:, end], inds, iterations, schedule, problem)
         # Adapt the schedule
         b, schedule = make_schedule(r, schedule; use_accept=use_accept)
         schedules[:, n + 1] = schedule
@@ -39,11 +39,10 @@ function nrpt(
     return x, schedules, barriers, index_process
 end
 
-
 function optimized_nrpt(
     x0::Vector{T},
     schedule::Vector{Float64},
-    problem::PathProblem{P, E},
+    problem::PathProblem,
     opt_state::Optimizer,
     seed = 2;
     n_rounds = 10,
@@ -51,7 +50,7 @@ function optimized_nrpt(
     use_accept=false,
     steps_per_round=n -> 100,
     save_rejection=false
-) where {T, P, E}
+) where {T}
 
     Random.seed!(seed)
     n_chains = length(schedule)
@@ -74,13 +73,11 @@ function optimized_nrpt(
     index_process = Matrix{Int}(undef, n_chains, 1)
     index_process[:, 1] = 1:n_chains
     inds = Indices(n_chains)
-    logZ = 0.0
-    cumulative_iterations = 0
     progress = Progress(length(all_iterations); desc="Running optimized NRPT...")
-    for n in 1:length(all_iterations)
+    for n in eachindex(all_iterations)
         iterations = all_iterations[n]
         # Run DEO
-        x_round, (lpsf, lpsb), r, ind_proc, inds = DEO(x[:, end], inds, iterations, schedule, problem)
+        x_round, (lpsf, lpsb), r, ind_proc, chains = DEO(x[:, end], inds, iterations, schedule, problem)
         new_logZf = stepping_stone(lpsf)
         new_logZb = -stepping_stone(lpsb)
         logZsf[n] = new_logZf
@@ -95,10 +92,10 @@ function optimized_nrpt(
         index_process = hcat(index_process, ind_proc)
         x = hcat(x, x_round)
 
-        x_round, _, r, ind_proc, inds = DEO(x[:, end], inds, iterations, schedule, problem)
+        x_round, (_, _), r, ind_proc, chains = DEO(x[:, end], inds, iterations, schedule, problem)
 
         # Adapt the path
-        SKL_est = adapt_path!(problem, x_round, schedule, opt_state) 
+        SKL_est = adapt_path!(problem, chains, schedule, opt_state)
         # Save some stuff
         SKL_ests[n] = SKL_est
         index_process = hcat(index_process, ind_proc)
@@ -125,8 +122,8 @@ end
 optimized_nrpt(
     x0::Vector{T},
     schedule::Vector{Float64},
-    problem::PathProblem{P, E},
+    problem::PathProblem,
     seed = 2;
     kwargs...
-) where {T, P, E} = optimized_nrpt(x0, schedule, problem, NoOptState(), seed; kwargs...)
+) where {T} = optimized_nrpt(x0, schedule, problem, NoOptState(), seed; kwargs...)
     

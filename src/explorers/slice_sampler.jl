@@ -3,17 +3,18 @@ mutable struct SliceSampler <: Explorer
     p::Int
 end
 
+SliceSampler() = SliceSampler(10., 3)
 
-function step(kernel::SliceSampler, path::Path, x::Float64, β)
+function step(explorer::SliceSampler, problem::PathProblem, x::Float64, β)
     # Get the current level (z = log(f(x)))
-    z = log_potential(path, x, β) - rand(Exponential())
+    z = log_potential(problem, x, β) - rand(Exponential())
     U = rand()
-    L = x - U * kernel.w
-    R = L + kernel.w
-    K = kernel.p
+    L = x - U * explorer.w
+    R = L + explorer.w
+    K = explorer.p
     while (K > 0
         && (
-            z < log_potential(path, L, β) || z < log_potential(path, R, β)
+            z < log_potential(problem, L, β) || z < log_potential(problem, R, β)
         )
     )
         V = rand()
@@ -24,20 +25,18 @@ function step(kernel::SliceSampler, path::Path, x::Float64, β)
         end
         K -= 1
     end
-    # println("L: $L, R: $R")
-    return shrink(kernel, L, R, z, path, x, β)
+    return shrink(explorer, problem, L, R, z, x, β)
 end
 
-function shrink(kernel::SliceSampler, L::Float64, R::Float64, z::Float64, path::Path, x::Float64, β)
+function shrink(explorer::SliceSampler, problem::PathProblem, L::Float64, R::Float64, z::Float64, x::Float64, β)
     L_bar = L
     R_bar = R
     U = rand()
     y = L_bar + U * (R_bar - L_bar)
     while true
-        # println("Shrinking ($L_bar  - $R_bar): $(y) - $x, Log potential: $(log_potential(path, y, β)) - $z")
         if (
-            z <= log_potential(path, y, β)
-            && accept(kernel, L, R, z, path, x, y, β)
+            z <= log_potential(problem, y, β)
+            && accept(explorer, problem, L, R, z, x, y, β)
         )
             break
         end
@@ -52,11 +51,11 @@ function shrink(kernel::SliceSampler, L::Float64, R::Float64, z::Float64, path::
     return y
 end
 
-function accept(kernel::SliceSampler, L, R, z, path::Path, x, y, β; ϵ=0.1)
+function accept(explorer::SliceSampler, problem::PathProblem, L::Float64, R::Float64, z::Float64, x::Float64, y::Float64, β)
     L_hat = L 
     R_hat = R 
     D = false
-    while (R_hat - L_hat) > 1.1 * kernel.w
+    while (R_hat - L_hat) > 1.1 * explorer.w
         M = (R_hat + L_hat) / 2.0
         if (x < M && y >= M) || (x >= M && y < M)
             D = true
@@ -67,8 +66,8 @@ function accept(kernel::SliceSampler, L, R, z, path::Path, x, y, β; ϵ=0.1)
             L_hat = M
         end
         if (D
-            && z >= log_potential(path, L_hat, β)
-            && z >= log_potential(path, R_hat, β)
+            && z >= log_potential(problem, L_hat, β)
+            && z >= log_potential(problem, R_hat, β)
         )
             return false
         end

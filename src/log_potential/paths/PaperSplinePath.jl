@@ -1,12 +1,9 @@
-mutable struct PaperSplinePath{T<:AbstractArray, P<:SamplingProblem} <: ParametrizedPath{T, P}
+mutable struct PaperSplinePath{T<:AbstractArray} <: ParametrizedPath{T}
     theta::T
 	log_potential::Function
     prep
     backend::AbstractADType
-    problem::P
 end
-
-get_problem(path::PaperSplinePath) = path.problem
 
 function params_to_knots_paper_spline_path(params::AbstractVector, increasing::Bool)
     if increasing
@@ -25,36 +22,35 @@ function get_exponents_paper_spline_path(theta::AbstractArray, β)
 end
 
 
-function PaperSplinePath(n_knots::Int, x0, problem::SamplingProblem, backend::AbstractADType)
+function PaperSplinePath(n_knots::Int, backend::AbstractADType)
     function make_knots(n_knots::Int, increasing::Bool)
         knots = range(0, 1, n_knots + 2)[2:end-1]
         return log.(increasing ? knots : 1 .- knots)
     end
     theta0 = reshape(stack([make_knots(n_knots, false), make_knots(n_knots, true)], dims=1), 2 * n_knots)
 
-    function __log_potential(theta, x, β)
+    function __log_potential(theta, log_potentials::Vector{Float64}, β)
+        V0, V1 = log_potentials
         e1, e2 = get_exponents_paper_spline_path(theta, β)
-        return -e1 * V0(problem, x) - e2 * V1(problem, x)
+        return -e1 * V0 - e2 * V1
     end
 
-    prep = prepare_path_gradient(__log_potential, theta0, x0, backend)
-    return PaperSplinePath(theta0, __log_potential, prep, backend, problem)
+    prep = prepare_path_gradient(__log_potential, theta0, backend)
+    return PaperSplinePath(theta0, __log_potential, prep, backend)
 end
 
-sample_iid(path::PaperSplinePath) = sample_iid(path.problem)
-
-function log_potential(path::PaperSplinePath, x, β)
-    return path.log_potential(path.theta, x, β)
+function log_potential(path::PaperSplinePath, log_potentials::Vector{Float64}, β)
+    return path.log_potential(path.theta, log_potentials, β)
 end
 
-function gradient(path::PaperSplinePath, x, β)
-    return path_gradient(path.log_potential, path.prep, path.theta, x, β, path.backend)
+function gradient(path::PaperSplinePath, log_potentials::Vector{Float64}, β)
+    return path_gradient(path.log_potential, path.prep, path.theta, log_potentials, β, path.backend)
 end
 
 get_exponents(path::PaperSplinePath, β) = get_exponents_paper_spline_path(path.theta, β)
 
 extract_param(path::PaperSplinePath) = path.theta
-extract_reparam(path::PaperSplinePath) = theta_to_eta(path.theta, [false, true])
+extract_reparam(path::PaperSplinePath) = theta_to_eta(path.theta, [false, true], params_to_knots_paper_spline_path)
 
 function set_param!(path::PaperSplinePath, theta::T) where {T <: AbstractArray}
     # This is the fix monotonicty transformation from the opt. path paper

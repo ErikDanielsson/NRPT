@@ -1,21 +1,17 @@
-struct LinearPath{P<:SamplingProblem} <: StaticPath{P}
+struct LinearPath <: StaticPath
 	log_potential
-    problem::P
 end
 
-get_problem(path::LinearPath) = path.problem
-
-function LinearPath(problem::SamplingProblem)
-    function __log_potential(x, β)
-        return -((1 - β) * V0(problem, x) + β * V1(problem, x))
+function LinearPath()
+    function __log_potential(log_potentials::Vector{Float64}, β)
+        V0, V1 = log_potentials
+        return -((1 - β) * V0 + β * V1)
     end
-    return LinearPath(__log_potential, problem) 
+    return LinearPath(__log_potential) 
 end
 
-sample_iid(path::LinearPath) = sample_iid(path.problem)
-
-function log_potential(path::LinearPath, x, β::T) where {T <: Real}
-    return path.log_potential(x, β)
+function log_potential(path::LinearPath, log_potentials::Vector{Float64}, β::T) where {T <: Real}
+    return path.log_potential(log_potentials, β)
 end
 
 get_exponents(::LinearPath, β) = (1 - β, β)

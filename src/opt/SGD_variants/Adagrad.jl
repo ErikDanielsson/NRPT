@@ -12,7 +12,7 @@ AdagradState{T}(eta::Float64, eps::Float64, ::T) where {T <: Real} =
 AdagradState{T}(eta::Float64, eps::Float64, params0::T) where {T <: AbstractArray} =
     AdagradState(eta, eps, zeros(eltype(T), size(params0)))
 
-function init(problem::PathProblem{<:ParametrizedPath, E}, state::AdagradState{Nothing}) where {E}
+function init(problem::PathProblem{P, <:ParametrizedPath, E}, state::AdagradState{Nothing}) where {P, E}
     init_acc_grad = extract_param(problem.path)
     return AdagradState(state.eta, state.eps, init_acc_grad)
 end
