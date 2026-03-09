@@ -4,6 +4,9 @@ using Distributions, Random, LinearAlgebra, Interpolations, ProgressMeter, ADTyp
 import DifferentiationInterface
 
 include("helpers.jl")
+# Path problem 
+include("log_potential/path_problem.jl")
+export PathProblem
 
 # Sampling problems
 include("log_potential/sampling_problems.jl")
@@ -37,9 +40,8 @@ export SliceSampler
 include("explorers/iid_explorer.jl")
 export NormalIIDExplorer
 
-# Path problem 
-include("log_potential/path_problem.jl")
-export PathProblem
+include("Chain.jl")
+include("PTChains.jl")
 
 # Optimization
 include("opt/stoch_opt.jl")

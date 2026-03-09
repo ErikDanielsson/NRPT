@@ -1,12 +1,9 @@
-mutable struct SplinePath{T<:AbstractArray, P<:SamplingProblem} <: ParametrizedPath{T, P}
+mutable struct SplinePath{T<:AbstractArray} <: ParametrizedPath{T}
     theta::T
 	log_potential::Function
     prep
     backend::AbstractADType
-    problem::P
 end
-
-get_problem(path::SplinePath) = path.problem
 
 function params_to_knots_spline_path(params::AbstractVector, increasing::Bool)
     rel_params = [params; 1.0]
@@ -22,34 +19,32 @@ function get_exponents_spline_path(theta::AbstractArray, β)
     )
 end
 
-function SplinePath(n_knots::Int, x0, problem::SamplingProblem, backend::AbstractADType)
+function SplinePath(n_knots::Int, backend::AbstractADType)
     theta0 = ones(2 * n_knots)
 
-    function __log_potential(theta, x, β)
+    function __log_potential(theta, log_potentials::AbstractVector{Float64}, β)
+        V0, V1 = log_potentials
         e1, e2 = get_exponents_spline_path(theta, β)
-        return -e1 * V0(problem, x) - e2 * V1(problem, x)
+        return -e1 * V0 - e2 * V1
     end
 
-    prep = prepare_path_gradient(__log_potential, theta0, x0, backend)
-    return SplinePath(theta0, __log_potential, prep, backend, problem)
+    prep = prepare_path_gradient(__log_potential, theta0, backend)
+    return SplinePath(theta0, __log_potential, prep, backend)
 end
 
-sample_iid(path::SplinePath) = sample_iid(path.problem)
-
-function log_potential(path::SplinePath, x, β)
-    return path.log_potential(path.theta, x, β)
+function log_potential(path::SplinePath, log_potentials::AbstractVector{Float64}, β)
+    return path.log_potential(path.theta, log_potentials, β)
 end
 
-function gradient(path::SplinePath, x, β)
-    return path_gradient(path.log_potential, path.prep, path.theta, x, β, path.backend)
+function gradient(path::SplinePath, log_potentials::AbstractVector{Float64}, β)
+    return path_gradient(path.log_potential, path.prep, path.theta, log_potentials, β, path.backend)
 end
 
 get_exponents(path::SplinePath, β) = get_exponents_spline_path(path.theta, β) 
 
 extract_param(path::SplinePath) = path.theta
-extract_reparam(path::SplinePath) = theta_to_eta(path.theta, [false, true])
+extract_reparam(path::SplinePath) = theta_to_eta(path.theta, [false, true], param_to_knots_spline_path)
 
 function set_param!(path::SplinePath, theta::T) where {T <: AbstractArray}
-    # TODO: Do the sorting operation here
     path.theta = theta
 end

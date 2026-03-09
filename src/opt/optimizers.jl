@@ -15,7 +15,7 @@ end
 ProximalStochOptState(s, p) = ProximalStochOptState(s, p, [], Float64[])
 ProximalStochOptState(s) = ProximalStochOptState(s, NoProx())
 
-function init(problem::PathProblem{<:ParametrizedPath, E}, state::ProximalStochOptState) where {E}
+function init(problem::PathProblem{P, <:ParametrizedPath, E}, state::ProximalStochOptState) where {P, E}
     return ProximalStochOptState(init(problem, state.stochOptState), state.proximalState, [extract_param(problem.path)], Float64[])
 end
 

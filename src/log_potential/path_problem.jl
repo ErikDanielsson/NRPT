@@ -1,14 +1,22 @@
-struct PathProblem{P <: Path, E <: Explorer} 
+abstract type SamplingProblem end
+log_potentials(problem::SamplingProblem, x) = [V0(problem, x), V1(problem, x)]
+abstract type Path end
+abstract type Explorer end
+struct PathProblem{T <: SamplingProblem, P <: Path, E <: Explorer} 
+    problem::T
 	path::P
 	explorer::E
 end
 
 function step(problem::PathProblem, x, β)
     return (β == 0.0
-        ? sample_iid(problem.path)
-        : step(problem.explorer, problem.path, x, β)
+        ? sample_iid(problem.problem)
+        : step(problem.explorer, problem, x, β)
     )
 end
+
+log_potential(problem::PathProblem, x, β) = log_potential(problem.path, log_potentials(problem.problem, x), β)
+log_potentials(problem::PathProblem, x) = log_potentials(problem.problem, x)
 
 function run_single_chain(x::T, problem::PathProblem, β, n::Int) where {T}  
     xs = Vector{T}(undef, n)

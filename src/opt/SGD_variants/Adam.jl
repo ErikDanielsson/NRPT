@@ -33,7 +33,7 @@ function step!(x, g, state::AdamState)
 	return (state.eta, g_hat)
 end
 
-function init(problem::PathProblem{<:ParametrizedPath, E}, state::AdamState{Nothing}) where {E}
+function init(problem::PathProblem{P, <:ParametrizedPath, E}, state::AdamState{Nothing}) where {P, E}
     param0 = extract_param(problem.path)
     return AdamState(state.eta, state.beta1, state.beta2, state.eps, param0)
 end
