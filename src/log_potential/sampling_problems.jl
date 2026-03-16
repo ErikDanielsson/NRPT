@@ -24,11 +24,11 @@ end
 sample_iid(problem::GenericDistributionProblem) = rand(problem.D0)
 
 function V0(problem::GenericDistributionProblem, x)
-    return -logpdf(problem.D0, x)
+    return logpdf(problem.D0, x)
 end
 
 function V1(problem::GenericDistributionProblem, x)
-    return -logpdf(problem.D1, x)
+    return logpdf(problem.D1, x)
 end
 
 struct NormalProblem <: DistributionProblem
@@ -41,9 +41,9 @@ end
 sample_iid(problem::NormalProblem) = rand(Normal(problem.μ0, problem.σ0))
 
 function V0(problem::NormalProblem, x)
-    return -logpdf(Normal(problem.μ0, problem.σ0), x)
+    return logpdf(Normal(problem.μ0, problem.σ0), x)
 end
 
 function V1(problem::NormalProblem, x)
-    return -logpdf(Normal(problem.μ1, problem.σ1), x)
+    return logpdf(Normal(problem.μ1, problem.σ1), x)
 end

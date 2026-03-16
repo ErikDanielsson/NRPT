@@ -20,7 +20,7 @@ function QPath(q0::T, backend::AbstractADType) where {T <: Real}
         V0, V1 = log_potentials
         q = param_to_q(t) 
         p = 1 - q
-        return logweightaddexp(1 - β, -p * V0, β, -p * V1) / p
+        return logweightaddexp(1 - β, p * V0, β, p * V1) / p
     end
     prep = prepare_path_gradient(__log_potential, t0, backend)
     return QPath(t0, __log_potential, prep, backend) 

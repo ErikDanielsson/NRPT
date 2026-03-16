@@ -32,7 +32,7 @@ function PaperSplinePath(n_knots::Int, backend::AbstractADType)
     function __log_potential(theta, log_potentials::Vector{Float64}, β)
         V0, V1 = log_potentials
         e1, e2 = get_exponents_paper_spline_path(theta, β)
-        return -e1 * V0 - e2 * V1
+        return e1 * V0 + e2 * V1
     end
 
     prep = prepare_path_gradient(__log_potential, theta0, backend)

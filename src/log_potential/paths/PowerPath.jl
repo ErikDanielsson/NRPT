@@ -8,7 +8,7 @@ end
 function PowerPath(t0::T, backend::AbstractADType) where {T <: Real}
     function __log_potential(t, log_potentials::AbstractVector{Float64}, β)
         V0, V1 = log_potentials
-        return -((1 - β)^t * V0 + β^t * V1)
+        return (1 - β)^t * V0 + β^t * V1
     end
     prep = prepare_path_gradient(__log_potential, t0, backend)
     return PowerPath(t0, __log_potential, prep, backend)

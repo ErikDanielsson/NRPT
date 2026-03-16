@@ -5,7 +5,7 @@ end
 function LinearPath()
     function __log_potential(log_potentials::Vector{Float64}, β)
         V0, V1 = log_potentials
-        return -((1 - β) * V0 + β * V1)
+        return (1 - β) * V0 + β * V1
     end
     return LinearPath(__log_potential) 
 end
