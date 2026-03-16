@@ -4,6 +4,8 @@ struct NoOptState <: Optimizer end
 
 init(problem, state::NoOptState) = state 
 step!(x, g, state::NoOptState) = 0.0
+get_last_eta(state::NoOptState) = 0.0
+get_last_x(state::NoOptState) = nothing 
 
 struct ProximalStochOptState{S <: StochOptState, P <: ProximalState, T}  <: Optimizer
     stochOptState::S
@@ -11,6 +13,9 @@ struct ProximalStochOptState{S <: StochOptState, P <: ProximalState, T}  <: Opti
     xs::Vector{T}
     etas::Vector{Float64}
 end
+
+get_last_eta(state::ProximalStochOptState) = state.etas[end]
+get_last_x(state::ProximalStochOptState) = state.xs[end]
 
 ProximalStochOptState(s, p) = ProximalStochOptState(s, p, [], Float64[])
 ProximalStochOptState(s) = ProximalStochOptState(s, NoProx())

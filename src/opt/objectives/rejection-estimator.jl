@@ -24,7 +24,7 @@ function T(
     prop2 = log_potential(problem.path, lps2, schedule[n])
     ref2 = log_potential(problem.path, lps1, schedule[n])
     ref1 = log_potential(problem.path, lps2, schedule[n + 1])
-    return Float64(prop1 + prop2 - ref2 - ref1 > 0)
+    return Float64(prop1 + prop2 - ref2 - ref1 < 0)
 end
 
 function S(

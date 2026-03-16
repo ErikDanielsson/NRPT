@@ -3,7 +3,9 @@ module NRPT
 using Distributions, Random, LinearAlgebra, Interpolations, ProgressMeter, ADTypes
 import DifferentiationInterface
 
-include("helpers.jl")
+include("helpers/misc.jl")
+include("helpers/polydecayaverager.jl")
+export cumavg
 # Path problem 
 include("log_potential/path_problem.jl")
 export PathProblem, run_single_chain

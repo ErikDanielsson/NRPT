@@ -47,3 +47,9 @@ end
 function V1(problem::NormalProblem, x)
     return logpdf(Normal(problem.μ1, problem.σ1), x)
 end
+
+function exponents_to_params(problem::NormalProblem, η0, η1)
+    σ2_β = (η0 / problem.σ0^2 + η1 / problem.σ1^2)^(-1)
+    μ_β = σ2_β * (η0 * problem.μ0 / problem.σ0^2 + η1 * problem.μ1 / problem.σ1^2)
+    return μ_β, sqrt(σ2_β)
+end

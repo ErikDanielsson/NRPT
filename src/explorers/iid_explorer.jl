@@ -12,7 +12,6 @@ struct NormalIIDExplorer <: IIDExplorer end
 
 function iid_explore(::NormalIIDExplorer, path::Path, problem::NormalProblem, β)
     η0, η1 = get_exponents(path, β)
-    σ2_β = (η0 / problem.σ0^2 + η1 / problem.σ1^2)^(-1)
-    μ_β = σ2_β * (η0 * problem.μ0 / problem.σ0^2 + η1 * problem.μ1 / problem.σ1^2)
-    return rand(Normal(μ_β, sqrt(σ2_β)))   
+    μ_β, σ_β = exponents_to_params(problem, η0, η1)
+    return rand(Normal(μ_β, σ_β))   
 end

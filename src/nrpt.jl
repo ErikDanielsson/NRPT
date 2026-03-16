@@ -66,6 +66,9 @@ function optimized_nrpt(
     logZsb = Vector{Float64}(undef, length(all_iterations))
     rejections = Matrix{Float64}(undef, n_chains - 1, 0)
 
+    loss_averager = init_averager(Float64(n_chains), PolynomialDecayAverager(0.1))
+    Λ_averager = init_averager(Float64(n_chains), PolynomialDecayAverager(0.1))
+
     opt_state = init(problem, opt_state)
 
     x = Array{T}(undef, n_chains, 1)
@@ -95,15 +98,24 @@ function optimized_nrpt(
 
         x_round, (_, _), r, ind_proc, chains = DEO(x[:, end], inds, iterations, schedule, problem)
 
-        compute_Λ(r, schedule; use_accept=false)
-
         # Adapt the path
         obj_val = adapt_path!(problem, chains, schedule, opt_state, objective)
         # Save some stuff
         objective_vals[n] = obj_val
+        Λ = compute_Λ(r, schedule; use_accept=false)
+        update!(Λ, n, Λ_averager)
+        update!(obj_val, n, loss_averager)
         index_process = hcat(index_process, ind_proc)
         x = hcat(x, x_round)
-        next!(progress, showvalues=[("objective", obj_val), ("Λ", b(1.0))])
+        next!(
+            progress,
+            showvalues=[
+                ("objective", get_average(loss_averager)),
+                ("Λ", get_average(Λ_averager)),
+                ("η", get_last_eta(opt_state)),
+                ("ϕ", get_last_x(opt_state))
+            ]
+        )
     end
     return NamedTuple([
         :x => x,
