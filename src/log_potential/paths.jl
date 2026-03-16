@@ -9,7 +9,7 @@ abstract type StaticPath <: Path end
 
 abstract type ParametrizedPath{T} <: Path end
 
-gradient(::ParametrizedPath, log_potentials::AbstractVector{Float64}, β) = throw(MethodError(gradient, x, β))
+gradient(::ParametrizedPath, log_potentials::AbstractVector{Float64}, β) = throw(MethodError(gradient, log_potentials, β))
 extract_param(::ParametrizedPath) = throw(MethodError(extract_param, x, β))
 extract_reparam(::ParametrizedPath) = throw(MethodError(extract_reparam, x, β))
 set_param!(::ParametrizedPath, param) = throw(MethodError(set_param!, param))
@@ -39,7 +39,7 @@ end
 function path_gradient(log_potential, prep, params::Float64, log_potentials::AbstractVector{Float64}, β, backend)
     return DifferentiationInterface.derivative(
         log_potential,
-        # prep,
+        # prep, # TODO: Make prep useful with threads
         backend,
         params,
         DifferentiationInterface.Constant(log_potentials),
@@ -50,7 +50,7 @@ end
 function path_gradient(log_potential, prep, params, log_potentials::AbstractVector{Float64}, β, backend)
     return DifferentiationInterface.gradient(
         log_potential,
-        # prep,
+        # prep, # TODO: Make prep useful with threads
         backend,
         params,
         DifferentiationInterface.Constant(log_potentials),

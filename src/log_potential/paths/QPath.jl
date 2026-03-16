@@ -16,7 +16,7 @@ end
 
 function QPath(q0::T, backend::AbstractADType) where {T <: Real}
     t0 = q_to_param(q0)
-    function __log_potential(t, log_potentials::Vector{Float64}, β)
+    function __log_potential(t, log_potentials::AbstractVector{Float64}, β)
         V0, V1 = log_potentials
         q = param_to_q(t) 
         p = 1 - q
@@ -26,12 +26,12 @@ function QPath(q0::T, backend::AbstractADType) where {T <: Real}
     return QPath(t0, __log_potential, prep, backend) 
 end
 
-function gradient(path::QPath, log_potentials::Vector{Float64}, β)
+function gradient(path::QPath, log_potentials::AbstractVector{Float64}, β)
     return path_gradient(path.log_potential, path.prep, path.t, log_potentials, β, path.backend)
 end
 
-function log_potential(path::QPath, x, β)
-    return path.log_potential(path.t, x, β)
+function log_potential(path::QPath, log_potentials::AbstractVector{Float64}, β)
+    return path.log_potential(path.t, log_potentials, β)
 end
 
 extract_param(path::QPath) = path.t
