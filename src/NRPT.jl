@@ -62,6 +62,9 @@ export ProximalState, ProjectionState, Box, project
 include("opt/optimizers.jl")
 export ProximalStochOptState, NoOptState
 include("opt/objectives/SKL.jl")
+include("opt/objectives/rejection-estimator.jl")
+include("opt/objectives/objectives.jl")
+export SKLObjective, BarrierObjective
 include("opt/path_optimization.jl")
 
 # Statistics

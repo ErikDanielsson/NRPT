@@ -49,7 +49,8 @@ function optimized_nrpt(
 	warmup = 1,
     use_accept=false,
     steps_per_round=n -> 100,
-    save_rejection=false
+    save_rejection=false,
+    objective::PathObjective=SKLObjective()
 ) where {T}
 
     Random.seed!(seed)
@@ -60,7 +61,7 @@ function optimized_nrpt(
     barriers = Vector{Any}(undef, length(all_iterations))
     Λ_rej = Vector{Float64}(undef, length(all_iterations))
     Λ_acc = Vector{Float64}(undef, length(all_iterations))
-    SKL_ests = Vector{Union{Float64, Nothing}}(undef, length(all_iterations))
+    objective_vals = Vector{Union{Float64, Nothing}}(undef, length(all_iterations))
     logZsf = Vector{Float64}(undef, length(all_iterations))
     logZsb = Vector{Float64}(undef, length(all_iterations))
     rejections = Matrix{Float64}(undef, n_chains - 1, 0)
@@ -94,13 +95,15 @@ function optimized_nrpt(
 
         x_round, (_, _), r, ind_proc, chains = DEO(x[:, end], inds, iterations, schedule, problem)
 
+        compute_Λ(r, schedule; use_accept=false)
+
         # Adapt the path
-        SKL_est = adapt_path!(problem, chains, schedule, opt_state)
+        obj_val = adapt_path!(problem, chains, schedule, opt_state, objective)
         # Save some stuff
-        SKL_ests[n] = SKL_est
+        objective_vals[n] = obj_val
         index_process = hcat(index_process, ind_proc)
         x = hcat(x, x_round)
-        next!(progress, showvalues=[("SKL", SKL_est), ("Λ", b(1.0))])
+        next!(progress, showvalues=[("objective", obj_val), ("Λ", b(1.0))])
     end
     return NamedTuple([
         :x => x,
@@ -108,7 +111,7 @@ function optimized_nrpt(
         :barriers => barriers,
         :Λ_rej => Λ_rej,
         :Λ_acc => Λ_acc,
-        :SKL_ests => SKL_ests,
+        :objective_vals => objective_vals,
         :index_process => index_process,
         :opt_state =>  opt_state,
         :rejections => rejections,

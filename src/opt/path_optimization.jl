@@ -1,20 +1,21 @@
-# If we do not have an optimizer do nothing
-function adapt_path!(problem, ptchains::PTChains, schedule, opt_state::NoOptState)
-    return sum(mcmc_loss(problem, chain, schedule) for chain in ptchains.chains)
+# If we do not have an optimizer, compute the objective loss for display only
+function adapt_path!(problem, ptchains::PTChains, schedule, opt_state::NoOptState, objective::PathObjective=SKLObjective())
+    return objective_loss(objective, problem, ptchains, schedule)
 end
 
 # If we have a static path do nothing
-function adapt_path!(problem::PathProblem{<:SamplingProblem, StaticPath, E}, ptchains::PTChains, schedule, opt_state::ProximalStochOptState) where {E}
+function adapt_path!(problem::PathProblem{<:SamplingProblem, StaticPath, E}, ptchains::PTChains, schedule, opt_state::ProximalStochOptState, ::PathObjective=SKLObjective()) where {E}
 end
 
 function adapt_path!(
     problem::PathProblem{<:SamplingProblem, <:ParametrizedPath, E},
     ptchains::PTChains,
     schedule,
-    opt_state::ProximalStochOptState{S, Pr}
+    opt_state::ProximalStochOptState{S, Pr},
+    objective::PathObjective=SKLObjective()
 ) where {E, S, Pr}
-    l = SKL_loss(problem, ptchains, schedule)
-    g = SKL_gradient(problem, ptchains, schedule)
+    l = objective_loss(objective, problem, ptchains, schedule)
+    g = objective_gradient(objective, problem, ptchains, schedule)
     new_param = step!(extract_param(problem.path), g, opt_state)
     set_param!(problem.path, new_param)
     return l
