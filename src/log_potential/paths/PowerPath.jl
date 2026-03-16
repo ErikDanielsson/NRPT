@@ -6,7 +6,7 @@ mutable struct PowerPath{T<:Real} <: ParametrizedPath{T}
 end
 
 function PowerPath(t0::T, backend::AbstractADType) where {T <: Real}
-    function __log_potential(t, log_potentials::Vector{Float64}, β)
+    function __log_potential(t, log_potentials::AbstractVector{Float64}, β)
         V0, V1 = log_potentials
         return -((1 - β)^t * V0 + β^t * V1)
     end
@@ -14,11 +14,11 @@ function PowerPath(t0::T, backend::AbstractADType) where {T <: Real}
     return PowerPath(t0, __log_potential, prep, backend)
 end
 
-function log_potential(path::PowerPath, log_potentials::Vector{Float64}, β)
-    return path.log_potential(path.t, log_potentials::Vector{Float64}, β)
+function log_potential(path::PowerPath, log_potentials::AbstractVector{Float64}, β)
+    return path.log_potential(path.t, log_potentials, β)
 end
 
-function gradient(path::PowerPath, log_potentials::Vector{Float64}, β)
+function gradient(path::PowerPath, log_potentials::AbstractVector{Float64}, β)
     return path_gradient(path.log_potential, path.prep, path.t, log_potentials, β, path.backend)
 end
 

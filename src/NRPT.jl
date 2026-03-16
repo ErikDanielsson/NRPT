@@ -6,7 +6,7 @@ import DifferentiationInterface
 include("helpers.jl")
 # Path problem 
 include("log_potential/path_problem.jl")
-export PathProblem
+export PathProblem, run_single_chain
 
 # Sampling problems
 include("log_potential/sampling_problems.jl")
@@ -31,7 +31,7 @@ include("log_potential/paths/SingleSplinePath.jl")
 export SingleSplinePath
 
 # Explorers
-include("explorers/explorers.jl")
+include("explorers/iterexplorer.jl")
 export IterExplorer
 include("explorers/mh_kernels.jl")
 export MHExplorer, make_q_mala, make_q_grw
@@ -61,6 +61,7 @@ include("opt/proximal_operators.jl")
 export ProximalState, ProjectionState, Box, project
 include("opt/optimizers.jl")
 export ProximalStochOptState, NoOptState
+include("opt/objectives/SKL.jl")
 include("opt/path_optimization.jl")
 
 # Statistics
