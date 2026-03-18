@@ -8,6 +8,12 @@ SliceSampler() = SliceSampler(10., 3)
 function step(explorer::SliceSampler, problem::PathProblem, x::Float64, β)
     # Get the current level (z = log(f(x)))
     z = log_potential(problem, x, β) - rand(Exponential())
+    if z == -Inf 
+        error("Slice sampler is outside support at point $x, β=$β")
+    elseif isnan(z)
+        error("NaN in slice sampler $x, β=$β")
+    end
+
     U = rand()
     L = x - U * explorer.w
     R = L + explorer.w
@@ -25,7 +31,13 @@ function step(explorer::SliceSampler, problem::PathProblem, x::Float64, β)
         end
         K -= 1
     end
-    return shrink(explorer, problem, L, R, z, x, β)
+    y = shrink(explorer, problem, L, R, z, x, β)
+    # if β > 0 && !(0 < y < 1)
+    #     println(log_potential(problem, x, β))
+    #     println(log_potential(problem, y, β))
+    #     error("Something strange: $x -> $y, β: $β")
+    # end
+    return y
 end
 
 function shrink(explorer::SliceSampler, problem::PathProblem, L::Float64, R::Float64, z::Float64, x::Float64, β)
@@ -33,7 +45,9 @@ function shrink(explorer::SliceSampler, problem::PathProblem, L::Float64, R::Flo
     R_bar = R
     U = rand()
     y = L_bar + U * (R_bar - L_bar)
+    i = 0
     while true
+        i += 1
         if (
             z <= log_potential(problem, y, β)
             && accept(explorer, problem, L, R, z, x, y, β)
@@ -47,6 +61,13 @@ function shrink(explorer::SliceSampler, problem::PathProblem, L::Float64, R::Flo
         end
         U = rand()
         y = L_bar + U * (R_bar - L_bar)
+        if i > 1000
+            println(L_bar)
+            println(R_bar)
+            println(y)
+            println(z)
+        end
+
     end
     return y
 end

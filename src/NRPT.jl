@@ -12,7 +12,8 @@ export PathProblem, run_single_chain
 
 # Sampling problems
 include("log_potential/sampling_problems.jl")
-export PosteriorProblem, GenericDistributionProblem, NormalProblem
+export PosteriorProblem, GenericDistributionProblem
+export NormalProblem, exponents_to_params
 
 # Path types
 include("log_potential/paths.jl")

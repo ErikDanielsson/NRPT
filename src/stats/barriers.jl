@@ -19,18 +19,36 @@ function compute_Λ(r, schedule; use_accept=false)
 	return sum(λ)
 end
 
-function make_schedule(r, schedule; use_accept=false)
+function make_schedule(r, schedule; use_accept=false, min_incr=1e-6)
 	λ = use_accept ? λ_est_accept(r) : λ_est_simple(r)
-	Λβ = [0; cumsum(λ)]
+	Λβ = sort([0; cumsum(λ)])
 	norm_Λβ = Λβ ./ last(Λβ)
 	if length(unique(norm_Λβ)) != length(norm_Λβ)
 		λ_ = λ .+  1e-6
-		Λβ_ = [0; cumsum(λ_)]
-		norm_Λβ = Λβ_ ./ last(Λβ_)
+		Λβ = sort([0; cumsum(λ_)])
+		norm_Λβ = Λβ ./ last(Λβ)
+		if length(unique(norm_Λβ)) != length(norm_Λβ)
+			barrier = interpolate(schedule, Λβ, FritschCarlsonMonotonicInterpolation())
+			return barrier, schedule
+		end
 	end
 	uniform = range(0., 1., length(schedule))
 	generator = interpolate(norm_Λβ, schedule, FritschCarlsonMonotonicInterpolation())
-	barrier = interpolate(schedule, Λβ, FritschCarlsonMonotonicInterpolation())
-	
-	return barrier, [0.0; generator.(uniform[2:end-1]); 1.0]
+	# println(Λβ)
+	try
+		barrier = interpolate(schedule, Λβ, FritschCarlsonMonotonicInterpolation())
+	catch e
+		println(e)
+		println(Λβ)
+		throw(e)
+	end
+	schedule = [0.0; generator.(uniform[2:end-1]); 1.0]	
+	if min_incr > 0.0
+		for i in 2:length(schedule)
+			if schedule[i] - schedule[i - 1] < min_incr
+				schedule[i] = schedule[i - 1] + min_incr
+			end
+		end
+	end
+	return barrier, schedule
 end

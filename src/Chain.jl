@@ -28,6 +28,16 @@ function swap_pair(problem::PathProblem, chain1::Chain, chain2::Chain, iteration
     lp_ref1 = log_potential(problem.path, log_potentials1, chain1.beta)
     lp_ref2 = log_potential(problem.path, log_potentials2, chain2.beta)
     α = exp(min(0, lp_prop1 + lp_prop2 - lp_ref1 - lp_ref2))
+    if isnan(α)
+        # println(chain1)
+        # println(chain2)
+        # println("α: $α: $(chain1.index):$(chain2.index)")
+        # println("Forward1: $lp_prop1, $(chain2.beta) $(chain2.index)")
+        # println("Forward2: $lp_prop2, $(chain1.beta) $(chain1.index)")
+        # println("Backward1: $lp_ref1, $(chain1.beta) $(chain1.index)")
+        # println("Backward2: $lp_ref2, $(chain2.beta) $(chain2.index)")
+        α = 0.0
+    end
     lps_forward = lp_prop1 - lp_ref1
     lps_backward = lp_prop2 - lp_ref2
     return α, lps_forward, lps_backward

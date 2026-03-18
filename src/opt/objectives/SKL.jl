@@ -1,5 +1,5 @@
 function SKL_loss(
-    problem::PathProblem{<:SamplingProblem, <:ParametrizedPath, E},
+    problem::PathProblem{<:SamplingProblem, <:Path, E},
     ptchains::PTChains,
     schedule,
 ) where {E}
@@ -13,11 +13,11 @@ function SKL_loss(
    return l
 end
 
-function acc_loss(problem::PathProblem{<:SamplingProblem, P, E}, chains::AbstractVector{Chain}, schedule) where {P<:ParametrizedPath, E <: Explorer}
+function acc_loss(problem::PathProblem{<:SamplingProblem, <:Path, E}, chains::AbstractVector{Chain}, schedule) where {E <: Explorer}
     return sum(SKL_loss(problem, chain, schedule) for chain in chains)
 end
 
-function SKL_loss(problem::PathProblem{<:SamplingProblem, P, E}, chain::Chain, schedule::Vector{Float64}) where {P<:ParametrizedPath, E <: Explorer}
+function SKL_loss(problem::PathProblem{<:SamplingProblem, <:Path, E}, chain::Chain, schedule::Vector{Float64}) where {E <: Explorer}
     return mean(J(problem, chain.index, schedule, lps) for lps in eachcol(chain.log_potentials))
 end
 
@@ -54,7 +54,7 @@ function ∇J(problem::PathProblem{<:SamplingProblem, P, E}, n, schedule, log_po
     end
 end
 
-function J(problem::PathProblem{<:SamplingProblem, P, E}, n::Int, schedule::Vector{Float64}, lps::AbstractVector{Float64}) where {P<:ParametrizedPath, E <: Explorer}
+function J(problem::PathProblem{<:SamplingProblem, <:Path, E}, n::Int, schedule::Vector{Float64}, lps::AbstractVector{Float64}) where {E <: Explorer}
     if n == 1
         return log_potential(problem.path, lps, schedule[1]) - log_potential(problem.path, lps, schedule[2])
     elseif n == length(schedule)

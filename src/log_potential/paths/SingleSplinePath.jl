@@ -16,7 +16,7 @@ end
 function get_exponents_single_spline(theta::AbstractArray, β)
     eta = theta_to_eta(theta, [true], params_to_knots_single_spline_path)
     l2 = linear_spline(eta, β)[1]
-    return (1 - β, l2)
+    return [1 - β, l2]
 end
 
 function SingleSplinePath(n_knots::Int, backend::AbstractADType)

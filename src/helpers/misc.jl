@@ -8,8 +8,8 @@ function logweightaddexp(a, x, b, y)
     return m + log(a * exp(x - m) + b * exp(y - m))
 end
 
-norm2(x::T) where {T <:Real} = x^2 
-norm2(x::T) where {T <: AbstractArray}= sum(abs2, x)
+norm2(x::T) where {T<:Real} = x^2 
+norm2(x::T) where {T<:AbstractArray}= sum(abs2, x)
 
 function logcummeanexp(X)
     n = length(X)
@@ -23,3 +23,12 @@ function logcummeanexp(X)
     
     return result
 end
+
+function nan_grad(f::T) where {T <: Real}
+    return isnan(f)
+end
+
+function nan_grad(f::T) where {T <: AbstractArray}
+    return any(isnan, f)
+end
+

@@ -14,8 +14,8 @@ struct ProximalStochOptState{S <: StochOptState, P <: ProximalState, T}  <: Opti
     etas::Vector{Float64}
 end
 
-get_last_eta(state::ProximalStochOptState) = state.etas[end]
-get_last_x(state::ProximalStochOptState) = state.xs[end]
+get_last_eta(state::ProximalStochOptState) = length(state.etas) > 0 ? state.etas[end] : nothing
+get_last_x(state::ProximalStochOptState) = length(state.etas) > 0 ? state.xs[end] : nothing
 
 ProximalStochOptState(s, p) = ProximalStochOptState(s, p, [], Float64[])
 ProximalStochOptState(s) = ProximalStochOptState(s, NoProx())

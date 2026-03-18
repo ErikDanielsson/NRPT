@@ -6,24 +6,25 @@ mutable struct QPath{T<:Real} <: ParametrizedPath{T}
 end
 
 # These are just to keep track of things if we come up with some better parametrization...
-function q_to_param(q::T) where {T <: Real}
-    return logit(q)
+function p_to_param(p::T) where {T <: Real}
+    return log(p)
 end
 
-function param_to_q(param)
-    return logistic(param)
+function param_to_p(param)
+    return exp(param)
 end
 
-function QPath(q0::T, backend::AbstractADType) where {T <: Real}
-    t0 = q_to_param(q0)
+function QPath(p0::T, backend::AbstractADType) where {T <: Real}
+    t0 = p_to_param(p0)
     function __log_potential(t, log_potentials::AbstractVector{Float64}, β)
         V0, V1 = log_potentials
-        q = param_to_q(t) 
-        p = 1 - q
+        p = param_to_p(t) 
         if β == 0.0
             return V0 
         elseif β == 1.0
             return V1
+        elseif p == 0.0
+            return (1 - β) * V0 + β * V1
         elseif V1 == -Inf
             return log(1 - β) / p + V0
         else

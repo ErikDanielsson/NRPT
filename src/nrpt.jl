@@ -66,8 +66,8 @@ function optimized_nrpt(
     logZsb = Vector{Float64}(undef, length(all_iterations))
     rejections = Matrix{Float64}(undef, n_chains - 1, 0)
 
-    loss_averager = init_averager(Float64(n_chains), PolynomialDecayAverager(0.1))
-    Λ_averager = init_averager(Float64(n_chains), PolynomialDecayAverager(0.1))
+    loss_averager = init_averager(Float64(n_chains), PolynomialDecayAverager(0.00))
+    Λ_averager = init_averager(Float64(n_chains), PolynomialDecayAverager(0.00))
 
     opt_state = init(problem, opt_state)
 
@@ -76,12 +76,16 @@ function optimized_nrpt(
 
     index_process = Matrix{Int}(undef, n_chains, 1)
     index_process[:, 1] = 1:n_chains
-    inds = Indices(n_chains)
+    chains = PTChains(x0, schedule)
     progress = Progress(length(all_iterations); desc="Running optimized NRPT...")
     for n in eachindex(all_iterations)
         iterations = all_iterations[n]
+
+        # Set up the chains
+        refresh_chains!(chains, schedule, iterations)
         # Run DEO
-        x_round, (lpsf, lpsb), r, ind_proc, chains = DEO(x[:, end], inds, iterations, schedule, problem)
+        x_round, (lpsf, lpsb), r, ind_proc, chains = DEO(chains, problem)
+        # Log some info
         new_logZf = stepping_stone(lpsf)
         new_logZb = -stepping_stone(lpsb)
         logZsf[n] = new_logZf
@@ -96,7 +100,10 @@ function optimized_nrpt(
         index_process = hcat(index_process, ind_proc)
         x = hcat(x, x_round)
 
-        x_round, (_, _), r, ind_proc, chains = DEO(x[:, end], inds, iterations, schedule, problem)
+        # Set up the chains
+        refresh_chains!(chains, schedule, iterations)
+        # Run DEO
+        x_round, (_, _), r, ind_proc, chains = DEO(chains, problem)
 
         # Adapt the path
         obj_val = adapt_path!(problem, chains, schedule, opt_state, objective)
@@ -113,7 +120,7 @@ function optimized_nrpt(
                 ("objective", get_average(loss_averager)),
                 ("Λ", get_average(Λ_averager)),
                 ("η", get_last_eta(opt_state)),
-                ("ϕ", get_last_x(opt_state))
+                ("ϕ", extract_reparam(problem.path))
             ]
         )
     end

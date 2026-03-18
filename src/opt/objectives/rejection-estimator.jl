@@ -4,12 +4,13 @@ function R(
     schedule::Vector{Float64},
     lps1::AbstractVector{Float64},
     lps2::AbstractVector{Float64}
-) where {P<:ParametrizedPath, E <: Explorer}
+) where {P<:Path, E <: Explorer}
     prop1 = log_potential(problem.path, lps1, schedule[n + 1])
     prop2 = log_potential(problem.path, lps2, schedule[n])
     ref2 = log_potential(problem.path, lps1, schedule[n])
     ref1 = log_potential(problem.path, lps2, schedule[n + 1])
-    return 1 - exp(min(0, prop1 + prop2 - ref1 - ref2))
+    r = 1 - exp(min(0, prop1 + prop2 - ref1 - ref2))
+    return isnan(r) ? 1.0 : r
 end
 
 
@@ -34,10 +35,9 @@ function S(
     lps1::AbstractVector{Float64},
     lps2::AbstractVector{Float64}
 ) where {P<:ParametrizedPath, E <: Explorer}
-    return (
-        gradient(problem.path, lps1, schedule[n])
-        + gradient(problem.path, lps2, schedule[n+1])
-    )
+    g1 = gradient(problem.path, lps1, schedule[n])
+    g2 = gradient(problem.path, lps2, schedule[n+1])
+    return g1 + g2
 end
 
 function barrier_grad(
@@ -87,7 +87,8 @@ function barrier_grad(
             eachcol(chain2.log_potentials)
         )
     ]
-    return cov(Ss, Ts)
+    g = cov(Ss, Ts)
+    return g
 end
 
 # Per-pair rejection rate (loss for a single adjacent pair)
@@ -96,7 +97,7 @@ function barrier_pair_loss(
     chain1::Chain,
     chain2::Chain,
     schedule::Vector{Float64}
-) where {P <: ParametrizedPath, E <: Explorer}
+) where {P <: Path, E <: Explorer}
     rs = [
         R(problem, chain1.index, schedule, lps1, lps2)
         for (lps1, lps2) in zip(
@@ -110,7 +111,7 @@ end
 
 # Aggregate loss over all adjacent chain pairs
 function barrier_loss(
-    problem::PathProblem{<:SamplingProblem, <:ParametrizedPath, E},
+    problem::PathProblem{<:SamplingProblem, <:Path, E},
     ptchains::PTChains,
     schedule::Vector{Float64}
 ) where {E}

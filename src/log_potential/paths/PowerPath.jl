@@ -22,7 +22,7 @@ function gradient(path::PowerPath, log_potentials::AbstractVector{Float64}, β)
     return path_gradient(path.log_potential, path.prep, path.t, log_potentials, β, path.backend)
 end
 
-get_exponents(path::PowerPath, β) = ((1 - β)^path.t, β^path.t)
+get_exponents(path::PowerPath, β) = [(1 - β)^path.t, β^path.t]
 
 extract_param(path::PowerPath) = path.t
 extract_reparam(path::PowerPath) = path.t

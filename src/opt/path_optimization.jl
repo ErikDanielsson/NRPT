@@ -16,7 +16,11 @@ function adapt_path!(
 ) where {E, S, Pr}
     l = objective_loss(objective, problem, ptchains, schedule)
     g = objective_gradient(objective, problem, ptchains, schedule)
-    new_param = step!(extract_param(problem.path), g, opt_state)
-    set_param!(problem.path, new_param)
+    if nan_grad(g)
+        @warn "Found NaN in gradient, skipping. Loss = $l"
+    else
+        new_param = step!(extract_param(problem.path), g, opt_state)
+        set_param!(problem.path, new_param)
+    end
     return l
 end
