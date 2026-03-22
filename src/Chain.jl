@@ -1,6 +1,6 @@
 mutable struct Chain
     index::Int
-    log_potentials::AbstractArray{Float64, 2}
+    log_potentials::Matrix{Float64}
     beta::Float64
 end
 

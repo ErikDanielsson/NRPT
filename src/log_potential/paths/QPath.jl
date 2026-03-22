@@ -27,7 +27,7 @@ function QPath(q0::T, backend::AbstractADType) where {T <: Real}
         elseif V1 == -Inf
             return log(1 - β) / p + V0
         else
-            return V0 + logweightaddexp(1 - β, 1.0, β, p * (V1 - V0)) / p
+            return V0 + logweightaddexp(1 - β, 0.0, β, p * (V1 - V0)) / p
         end
     end
     prep = prepare_path_gradient(__log_potential, t0, backend)

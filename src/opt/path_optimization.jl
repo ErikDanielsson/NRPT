@@ -24,3 +24,50 @@ function adapt_path!(
     end
     return l
 end
+
+# Trust region: take multiple IS-reweighted SKL gradient steps, stopping when
+# the ESS ratio (Σwᵢ)²/(n Σwᵢ²) drops below δ on any chain.
+function adapt_path!(
+    problem::PathProblem{<:SamplingProblem, <:ParametrizedPath},
+    ptchains::PTChains,
+    schedule,
+    opt_state::TrustRegionState,
+    ::SKLObjective = SKLObjective(),
+)
+    chains = ptchains.chains
+
+    # Store log_potential(φ₀, lps_i, β) for each chain before any step.
+    # IS log weight for sample i in chain n: log w_i = lp(φ, lps_i, β) - ref_lps_n[i]
+    ref_lps = [
+        [log_potential(problem.path, lps, schedule[chain.index])
+         for lps in eachcol(chain.log_potentials)]
+        for chain in chains
+    ]
+
+    l = sum(IS_SKL_loss_chain(problem, chain, schedule, ref)
+            for (chain, ref) in zip(chains, ref_lps))
+
+    for _ in 1:opt_state.max_steps
+        # Stop if any chain's ESS ratio drops below δ
+        if any(ess_ratio(chain_log_weights(problem, chain, schedule, ref)) < opt_state.δ
+               for (chain, ref) in zip(chains, ref_lps))
+            break
+        end
+
+        g = sum(IS_SKL_grad_chain(problem, chain, schedule, ref)
+                for (chain, ref) in zip(chains, ref_lps))
+
+        if nan_grad(g)
+            @warn "NaN gradient in trust region update, stopping"
+            break
+        end
+
+        new_param = step!(extract_param(problem.path), g, opt_state.inner_opt)
+        set_param!(problem.path, new_param)
+
+        l = sum(IS_SKL_loss_chain(problem, chain, schedule, ref)
+                for (chain, ref) in zip(chains, ref_lps))
+    end
+
+    return l
+end

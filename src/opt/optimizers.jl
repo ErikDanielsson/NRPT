@@ -34,3 +34,24 @@ function step!(x, g, state::ProximalStochOptState{S, P}) where {S, P}
     push!(state.etas, η)
 	return x
 end
+
+# Trust region optimizer: wraps an inner optimizer and takes multiple IS-reweighted
+# gradient steps per round, stopping when the ESS ratio drops below δ.
+struct TrustRegionState{O <: ProximalStochOptState} <: Optimizer
+    inner_opt::O
+    δ::Float64       # minimum ESS ratio to continue stepping: (Σwᵢ)²/(n Σwᵢ²) ≥ δ
+    max_steps::Int   # hard cap on inner iterations per round
+end
+
+TrustRegionState(inner::ProximalStochOptState; δ=0.5, max_steps=20) =
+    TrustRegionState(inner, Float64(δ), max_steps)
+TrustRegionState(opt::StochOptState, prox::ProximalState; δ=0.5, max_steps=20) =
+    TrustRegionState(ProximalStochOptState(opt, prox); δ=δ, max_steps=max_steps)
+TrustRegionState(opt::StochOptState; δ=0.5, max_steps=20) =
+    TrustRegionState(ProximalStochOptState(opt); δ=δ, max_steps=max_steps)
+
+get_last_eta(state::TrustRegionState) = get_last_eta(state.inner_opt)
+
+function init(problem::PathProblem{<:SamplingProblem, <:ParametrizedPath}, state::TrustRegionState)
+    return TrustRegionState(init(problem, state.inner_opt), state.δ, state.max_steps)
+end

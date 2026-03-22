@@ -71,11 +71,13 @@ function optimized_nrpt(
 
     opt_state = init(problem, opt_state)
 
-    x = Array{T}(undef, n_chains, 1)
+    total_iters = sum(all_iterations)
+    x = Matrix{T}(undef, n_chains, 1 + 2 * total_iters)
     x[:, 1] = x0
-
-    index_process = Matrix{Int}(undef, n_chains, 1)
+    index_process = Matrix{Int}(undef, n_chains, 1 + 2 * total_iters)
     index_process[:, 1] = 1:n_chains
+    col = 2
+
     chains = PTChains(x0, schedule)
     progress = Progress(length(all_iterations); desc="Running optimized NRPT...")
     for n in eachindex(all_iterations)
@@ -97,8 +99,9 @@ function optimized_nrpt(
         b, schedule = make_schedule(r, schedule; use_accept=use_accept)
         schedules[:, n + 1] = schedule
         barriers[n] = b
-        index_process = hcat(index_process, ind_proc)
-        x = hcat(x, x_round)
+        x[:, col:col+iterations-1] = x_round
+        index_process[:, col:col+iterations-1] = ind_proc
+        col += iterations
 
         # Set up the chains
         refresh_chains!(chains, schedule, iterations)
@@ -112,8 +115,9 @@ function optimized_nrpt(
         Λ = compute_Λ(r, schedule; use_accept=false)
         update!(Λ, n, Λ_averager)
         update!(obj_val, n, loss_averager)
-        index_process = hcat(index_process, ind_proc)
-        x = hcat(x, x_round)
+        x[:, col:col+iterations-1] = x_round
+        index_process[:, col:col+iterations-1] = ind_proc
+        col += iterations
         next!(
             progress,
             showvalues=[

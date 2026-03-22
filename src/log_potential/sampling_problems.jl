@@ -38,16 +38,20 @@ struct NormalProblem <: DistributionProblem
     σ1::Float64
 end
 
+const _LOG_SQRT_2PI = 0.9189385332046728  # log(sqrt(2π))
+
 NormalProblem(D0::Normal, D1::Normal) = NormalProblem(params(D0)..., params(D1)...)
 
-sample_iid(problem::NormalProblem) = rand(Normal(problem.μ0, problem.σ0))
+sample_iid(problem::NormalProblem) = randn() * problem.σ0 + problem.μ0
 
 function V0(problem::NormalProblem, x)
-    return logpdf(Normal(problem.μ0, problem.σ0), x)
+    z = (x - problem.μ0) / problem.σ0
+    return -0.5 * z * z - log(problem.σ0) - _LOG_SQRT_2PI
 end
 
 function V1(problem::NormalProblem, x)
-    return logpdf(Normal(problem.μ1, problem.σ1), x)
+    z = (x - problem.μ1) / problem.σ1
+    return -0.5 * z * z - log(problem.σ1) - _LOG_SQRT_2PI
 end
 
 function exponents_to_params(problem::NormalProblem, η0, η1)

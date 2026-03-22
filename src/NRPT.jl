@@ -24,6 +24,8 @@ include("log_potential/paths/PowerPath.jl")
 export PowerPath
 include("log_potential/paths/QPath.jl")
 export QPath
+include("log_potential/paths/NonMonotonePath.jl")
+export NonMonotonePath
 
 include("log_potential/paths/spline-helpers.jl")
 include("log_potential/paths/PaperSplinePath.jl")
