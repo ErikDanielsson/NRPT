@@ -3,8 +3,12 @@ uuid = "9c128957-550d-4f07-a362-47a8f8429bf1"
 version = "1.0.0-DEV"
 authors = ["ErikDanielsson <danielsson.erik.0@gmail.com> and contributors"]
 
+[workspace]
+projects = ["examples", "cvx-splines"]
+
 [deps]
 ADTypes = "47edcb42-4c32-4615-8424-f2b9edc5f35b"
+BSplineKit = "093aae92-e908-43d7-9660-e50ee39d5a0a"
 DifferentiationInterface = "a0c0ee7d-e4b9-4e03-894e-1c5f64a51d63"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
@@ -16,6 +20,7 @@ Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [compat]
 ADTypes = "1.21.0"
+BSplineKit = "0.19.2"
 DifferentiationInterface = ">= 0.6.0"
 Distributions = ">= 0.25.0"
 Interpolations = ">= 0.14.0"
@@ -31,6 +36,3 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
 test = ["Test"]
-
-[workspace]
-projects = ["examples"]

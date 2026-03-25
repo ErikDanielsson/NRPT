@@ -17,7 +17,6 @@ function logcummeanexp(X)
     for i in 1:n
         # Compute log(mean(exp(X[1:i]))) = logsumexp(X[1:i]) - log(i)
         logmean_i = logsumexp(X[1:i]) .- log(i)
-        
         result[i] = logmean_i
     end
     

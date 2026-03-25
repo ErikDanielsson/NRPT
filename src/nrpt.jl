@@ -80,6 +80,7 @@ function optimized_nrpt(
 
     chains = PTChains(x0, schedule)
     progress = Progress(length(all_iterations); desc="Running optimized NRPT...")
+    next!(progress)
     for n in eachindex(all_iterations)
         iterations = all_iterations[n]
 
@@ -121,8 +122,8 @@ function optimized_nrpt(
         next!(
             progress,
             showvalues=[
-                ("objective", get_average(loss_averager)),
-                ("Λ", get_average(Λ_averager)),
+                ("objective", obj_val),
+                ("Λ", Λ),
                 ("η", get_last_eta(opt_state)),
                 ("ϕ", extract_reparam(problem.path))
             ]

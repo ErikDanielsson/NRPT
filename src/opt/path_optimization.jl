@@ -47,11 +47,15 @@ function adapt_path!(
     l = sum(IS_SKL_loss_chain(problem, chain, schedule, ref)
             for (chain, ref) in zip(chains, ref_lps))
 
-    for _ in 1:opt_state.max_steps
+    prog = Progress(opt_state.max_steps; desc="Trust region optimization", offset = 5)
+    for n in 1:opt_state.max_steps
         # Stop if any chain's ESS ratio drops below δ
-        if any(ess_ratio(chain_log_weights(problem, chain, schedule, ref)) < opt_state.δ
-               for (chain, ref) in zip(chains, ref_lps))
-            break
+        for (chain, ref) in zip(chains, ref_lps)
+            e = ess_ratio(chain_log_weights(problem, chain, schedule, ref))
+            if e < opt_state.δ
+                push!(opt_state.n_steps, n)
+                return l
+            end
         end
 
         g = sum(IS_SKL_grad_chain(problem, chain, schedule, ref)
@@ -67,7 +71,15 @@ function adapt_path!(
 
         l = sum(IS_SKL_loss_chain(problem, chain, schedule, ref)
                 for (chain, ref) in zip(chains, ref_lps))
+
+        next!(prog, showvalues=[
+                ("objective", l),
+                ("η", get_last_eta(opt_state)),
+                ("g", g)
+            ])
     end
+
+    push!(opt_state.n_steps, opt_state.max_steps)
 
     return l
 end

@@ -1,7 +1,7 @@
 module NRPT
 
 using Distributions, Random, LinearAlgebra, Interpolations, ProgressMeter, ADTypes
-import DifferentiationInterface
+import DifferentiationInterface, BSplineKit
 
 include("helpers/misc.jl")
 include("helpers/polydecayaverager.jl")
@@ -20,6 +20,10 @@ include("log_potential/paths.jl")
 export get_exponents, extract_params 
 include("log_potential/paths/LinearPath.jl")
 export LinearPath
+include("log_potential/paths/PerturbedLinearPathNoProj.jl")
+export PerturbedLinearPath
+include("log_potential/paths/ConstantPerturbedLinearPath.jl")
+export ConstantPerturbedLinearPath
 include("log_potential/paths/PowerPath.jl")
 export PowerPath
 include("log_potential/paths/QPath.jl")
@@ -63,13 +67,14 @@ export AdagradState
 include("opt/SGD_variants/ScaledAdagrad.jl")
 export ScaledAdagradState
 include("opt/proximal_operators.jl")
-export ProximalState, ProjectionState, Box, project
+export ProximalState, NoProx, ProjectionState, Box, SumConstraint, project
 include("opt/optimizers.jl")
 export ProximalStochOptState, NoOptState
+include("opt/objectives/trust_region.jl")
 include("opt/objectives/SKL.jl")
 include("opt/objectives/rejection-estimator.jl")
 include("opt/objectives/objectives.jl")
-export SKLObjective, BarrierObjective
+export SKLObjective, BarrierObjective, TrustRegionState
 include("opt/path_optimization.jl")
 
 # Statistics

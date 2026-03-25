@@ -4,7 +4,7 @@ mutable struct Indices
 end
 
 Indices(n::Int) = Indices(1:n, 1:n)
-copy(is::Indices) = Indices(Base.copy(is.σ), Base.copy(is.σ_inv))
+Base.copy(is::Indices) = Indices(Base.copy(is.σ), Base.copy(is.σ_inv))
 
 function swap(is::Indices, i, j)
 	new_is = copy(is)
@@ -68,7 +68,7 @@ Base.length(chains::PTChains) = length(chains.chains)
 Base.size(chains::PTChains) = (length(chains.chains), chains.iterations)
 
 function explore!(problem::PathProblem, chains::PTChains, iteration::Int) where {T}
-    Threads.@threads :static for chain in chains.chains
+    Threads.@threads for chain in chains.chains
         state_index = chains.inds.σ[chain.index]
         # println("Iteration $iteration: ch:$(chain.index), st:$(state_index)")
         chains.x[state_index] = explore_chain(problem, chain, chains.x[state_index], iteration)
