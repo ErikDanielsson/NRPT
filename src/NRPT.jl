@@ -22,6 +22,8 @@ include("log_potential/paths/LinearPath.jl")
 export LinearPath
 include("log_potential/paths/PerturbedLinearPathNoProj.jl")
 export PerturbedLinearPath
+include("log_potential/paths/PerturbedLinearPathBidir.jl")
+export PerturbedLinearPathBidir
 include("log_potential/paths/ConstantPerturbedLinearPath.jl")
 export ConstantPerturbedLinearPath
 include("log_potential/paths/PowerPath.jl")
@@ -30,6 +32,10 @@ include("log_potential/paths/QPath.jl")
 export QPath
 include("log_potential/paths/NonMonotonePath.jl")
 export NonMonotonePath
+include("log_potential/paths/PPathBump.jl")
+export PPathBump
+include("log_potential/paths/PPathQ.jl")
+export PPathQ
 
 include("log_potential/paths/spline-helpers.jl")
 include("log_potential/paths/PaperSplinePath.jl")
@@ -71,15 +77,18 @@ export ProximalState, NoProx, ProjectionState, Box, SumConstraint, project
 include("opt/optimizers.jl")
 export ProximalStochOptState, NoOptState
 include("opt/objectives/trust_region.jl")
+include("opt/objectives/objectives.jl")
+include("opt/objectives/trust-region-autodiff.jl")
 include("opt/objectives/SKL.jl")
 include("opt/objectives/rejection-estimator.jl")
-include("opt/objectives/objectives.jl")
-export SKLObjective, BarrierObjective, TrustRegionState
+export SKLObjective, BarrierObjective, TrustRegionState, NewtonTrustRegionState
 include("opt/path_optimization.jl")
 
 # Statistics
 include("stats/barriers.jl")
 include("stats/stepping_stone.jl")
+include("stats/record_lps.jl")
+export get_round_lps
 include("stats/stats.jl")
 export round_trip_rate, count_chain_round_trips, count_round_trips_per_round
 

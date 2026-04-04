@@ -44,11 +44,11 @@ struct TrustRegionState{O <: ProximalStochOptState} <: Optimizer
     n_steps::Vector{Int}
 end
 
-TrustRegionState(inner::ProximalStochOptState; δ=0.9, max_steps=20) =
+TrustRegionState(inner::ProximalStochOptState; δ=0.5, max_steps=20) =
     TrustRegionState(inner, Float64(δ), max_steps, Int[])
-TrustRegionState(opt::StochOptState, prox::ProximalState; δ=0.9, max_steps=20) =
+TrustRegionState(opt::StochOptState, prox::ProximalState; δ=0.5, max_steps=20) =
     TrustRegionState(ProximalStochOptState(opt, prox); δ=δ, max_steps=max_steps)
-TrustRegionState(opt::StochOptState; δ=0.9, max_steps=20) =
+TrustRegionState(opt::StochOptState; δ=0.5, max_steps=20) =
     TrustRegionState(ProximalStochOptState(opt); δ=δ, max_steps=max_steps)
 
 get_last_eta(state::TrustRegionState) = get_last_eta(state.inner_opt)

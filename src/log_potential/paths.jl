@@ -1,7 +1,7 @@
 
 log_potential(::Path, log_potentials::AbstractVector{Float64}, β) = throw(MethodError(log_potential, x, β))
 
-# Get exponentens from a linear like path. This is only well defined
+# Get exponents from a linear like path. This is only well defined
 # on certain paths, but is useful for sampling iid in exponential families
 get_exponents(::Path, β) = throw(MethodError(log_potential, β))
 
@@ -9,50 +9,47 @@ abstract type StaticPath <: Path end
 
 abstract type ParametrizedPath{T} <: Path end
 
-gradient(::ParametrizedPath, log_potentials::AbstractVector{Float64}, β) = throw(MethodError(gradient, log_potentials, β))
 extract_param(::ParametrizedPath) = throw(MethodError(extract_param, x, β))
 extract_reparam(::ParametrizedPath) = throw(MethodError(extract_reparam, x, β))
 set_param!(::ParametrizedPath, param) = throw(MethodError(set_param!, param))
 
-# Functions for preparing and computing derivatives of paths
+# Generic gradient: path itself is the DI callable.
+# Each ParametrizedPath must implement (path::MyPath)(params, lps, β) as its call operator.
+# Prep is computed lazily on the first call using the actual argument types, then cached.
+function gradient(path::P, log_potentials::AbstractVector{Float64}, β) where {P <: ParametrizedPath}
+    if isnothing(path.prep)
+        path.prep = _prepare_path_gradient(path, extract_param(path), log_potentials, β, path.backend)
+    end
+    return _path_gradient(path, path.prep, extract_param(path), log_potentials, β, path.backend)
+end
 
-function prepare_path_gradient(log_potential::Function, params::Float64, backend::AbstractADType)
+function _prepare_path_gradient(path, params::Float64, log_potentials, β, backend::AbstractADType)
     return DifferentiationInterface.prepare_derivative(
-        log_potential,
-        backend,
-        params,
-        DifferentiationInterface.Constant(zeros(2)), # Log potentials, we only handle two right now
-        DifferentiationInterface.Constant(1.0) # β
-    )
-end
-
-function prepare_path_gradient(log_potential::Function, params, backend::AbstractADType)
-    return DifferentiationInterface.prepare_gradient(
-        log_potential,
-        backend,
-        similar(params),
-        DifferentiationInterface.Constant(zeros(2)), # Log potentials, we only handle two right now
-        DifferentiationInterface.Constant(1.0), # β
-    )
-end
-
-function path_gradient(log_potential, prep, params::Float64, log_potentials::AbstractVector{Float64}, β, backend)
-    return DifferentiationInterface.derivative(
-        log_potential,
-        # prep, # TODO: Make prep useful with threads
-        backend,
-        params,
+        path, backend, params,
         DifferentiationInterface.Constant(log_potentials),
         DifferentiationInterface.Constant(β)
     )
 end
 
-function path_gradient(log_potential, prep, params, log_potentials::AbstractVector{Float64}, β, backend)
+function _prepare_path_gradient(path, params, log_potentials, β, backend::AbstractADType)
+    return DifferentiationInterface.prepare_gradient(
+        path, backend, copy(params),
+        DifferentiationInterface.Constant(log_potentials),
+        DifferentiationInterface.Constant(β)
+    )
+end
+
+function _path_gradient(path, prep, params::Float64, log_potentials::AbstractVector{Float64}, β, backend)
+    return DifferentiationInterface.derivative(
+        path, prep, backend, params,
+        DifferentiationInterface.Constant(log_potentials),
+        DifferentiationInterface.Constant(β)
+    )
+end
+
+function _path_gradient(path, prep, params, log_potentials::AbstractVector{Float64}, β, backend)
     return DifferentiationInterface.gradient(
-        log_potential,
-        # prep, # TODO: Make prep useful with threads
-        backend,
-        params,
+        path, prep, backend, params,
         DifferentiationInterface.Constant(log_potentials),
         DifferentiationInterface.Constant(β)
     )

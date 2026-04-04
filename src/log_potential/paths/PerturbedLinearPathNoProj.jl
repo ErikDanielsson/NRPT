@@ -34,41 +34,34 @@ end
 
 mutable struct PerturbedLinearPath{T<:AbstractVector{<:Real}} <: ParametrizedPath{T}
     t::T
-    log_potential::Function
     prep
     backend::AbstractADType
 end
 
 function PerturbedLinearPath(c0::AbstractVector, backend::AbstractADType)
-    # Use c_to_param when c0 is in the feasible interior; otherwise use the
-    # default t = 0 initialisation (cᵢ = 1/N for all i, ∑ cᵢ = 1).
-    c0 = c_to_param(c0)
-    function __log_potential(t, log_potentials::AbstractVector{Float64}, β)
-        V0, V1 = log_potentials
-        if β == 0.0
-            return V0
-        elseif β == 1.0
-            return V1
-        else
-            c = param_to_c(t)
-            perturbation = sum(c[i] * softplus(V1 - V0 - 10i) for i in eachindex(c[1:end]))
-            return V0 * (1 - β) + β * V1 + (1 - β) * β * perturbation
-        end
-    end
-    prep = prepare_path_gradient(__log_potential, c0, backend)
-    return PerturbedLinearPath(c0, __log_potential, prep, backend)
+    t0 = c_to_param(c0)
+    return PerturbedLinearPath(t0, nothing, backend)
 end
 
 # Convenience constructor: default initialisation t = 0 (cᵢ = 1/N)
 PerturbedLinearPath(N::Int, backend::AbstractADType) =
     PerturbedLinearPath(zeros(N), backend)
 
-function log_potential(path::PerturbedLinearPath, log_potentials::AbstractVector{Float64}, β)
-    return path.log_potential(path.t, log_potentials, β)
+(path::PerturbedLinearPath)(t, log_potentials::AbstractVector{Float64}, β) = begin
+    V0, V1 = log_potentials
+    if β == 0.0
+        return V0
+    elseif β == 1.0
+        return V1
+    else
+        c = param_to_c(t)
+        perturbation = sum(c[i] * softplus(V1 - V0 - 10i) for i in eachindex(c[1:end]))
+        return V0 * (1 - β) + β * V1 + (1 - β) * β * perturbation
+    end
 end
 
-function gradient(path::PerturbedLinearPath, log_potentials::AbstractVector{Float64}, β)
-    return path_gradient(path.log_potential, path.prep, path.t, log_potentials, β, path.backend)
+function log_potential(path::PerturbedLinearPath, log_potentials::AbstractVector{Float64}, β)
+    return path(path.t, log_potentials, β)
 end
 
 extract_param(path::PerturbedLinearPath) = path.t

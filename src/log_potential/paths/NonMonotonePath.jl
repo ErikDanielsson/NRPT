@@ -1,26 +1,17 @@
-struct NonMonotonePath <: StaticPath
-	log_potential
+struct NonMonotonePath <: StaticPath end
+
+function _nonmonotone_f(β; p = 1)
+    return (exp(p * β) - 1) / (exp(p) - 1)
 end
 
-function NonMonotonePath()
-    function f(β; p = 1)
-        return (exp(p * β) - 1) / (exp(p) - 1)
-    end
-    function __log_potential(log_potentials::AbstractVector{Float64}, β)
-        V0, V1 = log_potentials
-        return V0 + logweightaddexp(1 - β, 1.0, f(β), 1 * (V1 - V0)) / 1
-    end
-
-    return NonMonotonePath(__log_potential) 
-end
-
-function log_potential(path::NonMonotonePath, log_potentials::AbstractVector{Float64}, β::T) where {T <: Real}
+function log_potential(::NonMonotonePath, log_potentials::AbstractVector{Float64}, β::T) where {T <: Real}
     if β == 0.0
         return log_potentials[1]
     elseif β == 1.0
         return log_potentials[2]
     else
-        return path.log_potential(log_potentials, β)
+        V0, V1 = log_potentials
+        return V0 + logweightaddexp(1 - β, 1.0, _nonmonotone_f(β), 1 * (V1 - V0)) / 1
     end
 end
 

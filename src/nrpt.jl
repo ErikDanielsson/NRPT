@@ -50,6 +50,7 @@ function optimized_nrpt(
     use_accept=false,
     steps_per_round=n -> 100,
     save_rejection=false,
+    save_lps=false,
     objective::PathObjective=SKLObjective()
 ) where {T}
 
@@ -65,6 +66,7 @@ function optimized_nrpt(
     logZsf = Vector{Float64}(undef, length(all_iterations))
     logZsb = Vector{Float64}(undef, length(all_iterations))
     rejections = Matrix{Float64}(undef, n_chains - 1, 0)
+    lp_recorder = LPRecorder(Val(save_lps), all_iterations, n_chains)
 
     loss_averager = init_averager(Float64(n_chains), PolynomialDecayAverager(0.00))
     Λ_averager = init_averager(Float64(n_chains), PolynomialDecayAverager(0.00))
@@ -80,7 +82,12 @@ function optimized_nrpt(
 
     chains = PTChains(x0, schedule)
     progress = Progress(length(all_iterations); desc="Running optimized NRPT...")
-    next!(progress)
+    ProgressMeter.update!(progress, 0, force=true, showvalues=[
+        ("objective", nothing),
+        ("Λ", nothing),
+        ("η", nothing),
+        ("ϕ", extract_reparam(problem.path))
+    ])
     for n in eachindex(all_iterations)
         iterations = all_iterations[n]
 
@@ -107,8 +114,9 @@ function optimized_nrpt(
         # Set up the chains
         refresh_chains!(chains, schedule, iterations)
         # Run DEO
-        x_round, (_, _), r, ind_proc, chains = DEO(chains, problem)
+        x_round, (lpsf, lpsb), r, ind_proc, chains = DEO(chains, problem)
 
+        record_lps!(lp_recorder, )
         # Adapt the path
         obj_val = adapt_path!(problem, chains, schedule, opt_state, objective)
         # Save some stuff

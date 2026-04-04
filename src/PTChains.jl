@@ -67,7 +67,7 @@ end
 Base.length(chains::PTChains) = length(chains.chains)
 Base.size(chains::PTChains) = (length(chains.chains), chains.iterations)
 
-function explore!(problem::PathProblem, chains::PTChains, iteration::Int) where {T}
+function explore!(problem::PathProblem, chains::PTChains, iteration::Int)
     Threads.@threads for chain in chains.chains
         state_index = chains.inds.σ[chain.index]
         # println("Iteration $iteration: ch:$(chain.index), st:$(state_index)")
