@@ -46,7 +46,7 @@ function PTChains(x0, init_schedule; dims=2)
     n_chains = length(init_schedule)
     chains = Vector{Chain}(undef, n_chains)
     for (i, beta) in enumerate(init_schedule)
-        chains[i] = Chain(i, Array{Float64, 2}(undef, dims, 0), beta)
+        chains[i] = Chain(i, Matrix{Float64}(undef, dims, 0), Vector{Float64}(undef, dims), beta)
     end
     inds = Indices(n_chains)
     r_buf          = Vector{Float64}(undef, n_chains - 1)
@@ -56,23 +56,45 @@ function PTChains(x0, init_schedule; dims=2)
 end
 
 function refresh_chains!(ptchains::PTChains, schedule, iterations; dims=2)
-    ptchains.iterations = iterations
-    chains = Vector{Chain}(undef, length(schedule))
-    for (i, beta) in enumerate(schedule)
-        chains[i] = Chain(i, Array{Float64, 2}(undef, dims, ptchains.iterations), beta)
+    if iterations != ptchains.iterations
+        ptchains.iterations = iterations
+        chains = Vector{Chain}(undef, length(schedule))
+        for (i, beta) in enumerate(schedule)
+            chains[i] = Chain(i, Matrix{Float64}(undef, dims, ptchains.iterations), Vector{Float64}(undef, dims), beta)
+        end
+        ptchains.chains = chains
+    else
+        # Same number of iterations so skip allocations
+        for (i, chain) in enumerate(ptchains.chains)
+            refresh_chain!(chain, i, schedule)
+        end
     end
-    ptchains.chains = chains
 end
 
 Base.length(chains::PTChains) = length(chains.chains)
 Base.size(chains::PTChains) = (length(chains.chains), chains.iterations)
 
 function explore!(problem::PathProblem, chains::PTChains, iteration::Int)
-    Threads.@threads for chain in chains.chains
+    # tforeach(chains.chains; scheduler=:static) do chain
+    #     state_index = chains.inds.σ[chain.index]
+    #     # println("Iteration $iteration: ch:$(chain.index), st:$(state_index)")
+    #     chains.x[state_index] = explore_chain(problem, chain, chains.x[state_index], iteration)
+    # end
+
+
+    # println("starting")
+    # println(chains.x)
+    function this_explore_chain(chain::Chain)
         state_index = chains.inds.σ[chain.index]
         # println("Iteration $iteration: ch:$(chain.index), st:$(state_index)")
-        chains.x[state_index] = explore_chain(problem, chain, chains.x[state_index], iteration)
+        # println(chains.x[state_index], ",",",",  chain.beta)
+        xi = explore_chain(problem, chain, chains.x[state_index], iteration)
+        # println(xi)
+        chains.x[state_index] = xi
     end
+    map(this_explore_chain, chains.chains)
+    # println("ending")
+    # println(chains.x)
     # println("x = $(get_state_per_temperature(chains))")
 end
 

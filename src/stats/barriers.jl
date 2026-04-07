@@ -19,7 +19,7 @@ function compute_Λ(r, schedule; use_accept=false)
 	return sum(λ)
 end
 
-function make_schedule(r, schedule; use_accept=false, min_incr=1e-6)
+function make_schedule(r, schedule; use_accept=false, min_incr=1e-16)
 	λ = use_accept ? λ_est_accept(r) : λ_est_simple(r)
 	Λβ = sort([0; cumsum(λ)])
 	norm_Λβ = Λβ ./ last(Λβ)

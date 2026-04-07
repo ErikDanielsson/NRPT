@@ -41,16 +41,20 @@ end
 
 function (loss::ISSKLLoss)(t)
     total = zero(eltype(t))
-    for (chain, ref) in zip(loss.chains, loss.ref_lps)
+    function chain_loss(args)
+        chain, ref = args
         n = chain.index
         β = loss.schedule[n]
-        log_w = [loss.path(t, lps, β) - ref[i]
-                 for (i, lps) in enumerate(eachcol(chain.log_potentials))]
-        w̃ = softmax(log_w)
+        w = softmax([loss.path(t, lps, β) - ref[i]
+                 for (i, lps) in enumerate(eachcol(chain.base_potentials))])
         Js = [_J_autodiff(loss.path, t, n, loss.schedule, lps)
-              for lps in eachcol(chain.log_potentials)]
-        total += dot(w̃, Js)
+              for lps in eachcol(chain.base_potentials)]
+        return dot(w, Js)
     end
+    # for args in zip(loss.chains, loss.ref_lps)
+    #     total += chain_loss(args)
+    # end
+    total = tmapreduce(chain_loss, +, collect(zip(loss.chains, loss.ref_lps)); scheduler=:static, init=0.0)
     return total
 end
 
@@ -101,7 +105,7 @@ get_last_eta(ntrs::NewtonTrustRegionState) = length(ntrs.min_eigvals) > 0 ? ntrs
 function _min_ess(path, t, chains, schedule, ref_lps)
     return minimum(
         ess_ratio([path(t, lps, schedule[chain.index]) - ref[i]
-                   for (i, lps) in enumerate(eachcol(chain.log_potentials))])
+                   for (i, lps) in enumerate(eachcol(chain.base_potentials))])
         for (chain, ref) in zip(chains, ref_lps)
     )
 end
@@ -130,7 +134,7 @@ function adapt_path!(
     # Freeze reference log-potentials at the current φ₀ before any inner step.
     ref_lps = [
         [log_potential(problem.path, lps, schedule[chain.index])
-         for lps in eachcol(chain.log_potentials)]
+         for lps in eachcol(chain.base_potentials)]
         for chain in chains
     ]
 
@@ -143,11 +147,11 @@ function adapt_path!(
     ProgressMeter.update!(prog, 0, force=true, showvalues=[
         ("objective", l),
     ])
+    t = extract_param(problem.path)
+    g = DifferentiationInterface.gradient(loss, opt_state.backend, t)
+    H = DifferentiationInterface.hessian(loss, opt_state.backend, t)
     for n in 1:opt_state.max_steps
-        t = extract_param(problem.path)
-        g = DifferentiationInterface.gradient(loss, opt_state.backend, t)
-        H = DifferentiationInterface.hessian(loss, opt_state.backend, t)
-        if sqrt(norm2(g)) < 1e-16
+       if sqrt(norm2(g)) < 1e-16
             return l
         end
         if nan_grad(g) || any(isnan, H)
@@ -190,6 +194,10 @@ function adapt_path!(
             ("||g||",     sqrt(norm2(g))),
             ("λ_min(H)",  min_eig),
         ])
+        t = extract_param(problem.path)
+        g = DifferentiationInterface.gradient!(loss, g, opt_state.backend, t)
+        H = DifferentiationInterface.hessian!(loss, H, opt_state.backend, t)
+     
     end
 
     push!(opt_state.n_steps, opt_state.max_steps)

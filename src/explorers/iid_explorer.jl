@@ -4,7 +4,11 @@
 
 abstract type IIDExplorer <: Explorer end
 
-function step(explorer::IIDExplorer, problem::PathProblem, x, β) 
+function step(explorer::IIDExplorer, problem::PathProblem, x, β)
+    return iid_explore(explorer, problem.path, problem.problem, β)
+end
+
+function step(explorer::IIDExplorer, problem::PathProblem, x, β, lp_buff::LP) where {LP <: AbstractVector{Float64}}
     return iid_explore(explorer, problem.path, problem.problem, β)
 end
 

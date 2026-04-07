@@ -17,14 +17,14 @@ end
 
 PPathQ(N::Int, backend::AbstractADType) = PPathQ([1.; zeros(N - 1)], nothing, backend)
 
-(path::PPathQ)(t, log_potentials::AbstractVector{Float64}, β) = begin
+(path::PPathQ)(t, log_potentials::LP, β) where {LP <: AbstractVector{Float64}} = begin
     V0, V1 = log_potentials
     if β == 0.0
         return V0
     elseif β == 1.0
         return V1
     else
-        c = softmax(t)[2:end]
+        c = @view(softmax(t)[2:end])
         N = length(c)
         # println([N / i * softplus(i / N * (V0 - V1)) for i in 1:N])
         forward  = sum(c[i] * N / i * softplus(i / N * (V0 - V1)) for i in 1:N)

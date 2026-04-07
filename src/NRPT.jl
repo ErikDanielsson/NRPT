@@ -1,6 +1,7 @@
 module NRPT
 
-using Distributions, Random, LinearAlgebra, Interpolations, ProgressMeter, ADTypes
+using Distributions, Random, LinearAlgebra, Interpolations
+using ProgressMeter, ADTypes, DelimitedFiles, OhMyThreads
 import DifferentiationInterface, BSplineKit
 
 include("helpers/misc.jl")
@@ -97,5 +98,18 @@ include("DEO.jl")
 include("nrpt.jl")
 export nrpt, optimized_nrpt
 
+# Problem library
+include("problem_library/mvnormal.jl")
+export mvnormal_slice_sampler
+include("problem_library/normal_iid.jl")
+export normal_iid
+include("problem_library/gmm.jl")
+export gmm_slice_sampler
+include("problem_library/cauchy.jl")
+export cauchy_slice_sampler
+include("problem_library/unidentifiable_product.jl")
+export unidentifiable_product_slice_sampler
+include("problem_library/ode/transfection.jl")
+export transfection_ode_slice_sampler, load_transfection_data
 
 end

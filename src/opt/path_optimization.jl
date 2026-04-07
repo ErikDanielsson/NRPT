@@ -40,7 +40,7 @@ function adapt_path!(
     # IS log weight for sample i in chain n: log w_i = lp(φ, lps_i, β) - ref_lps_n[i]
     ref_lps = [
         [log_potential(problem.path, lps, schedule[chain.index])
-         for lps in eachcol(chain.log_potentials)]
+         for lps in eachcol(chain.base_potentials)]
         for chain in chains
     ]
 

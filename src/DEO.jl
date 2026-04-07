@@ -27,8 +27,9 @@ function DEO(
 		lps_backward[:, n] = lp_backward
 
 		# Record the state and index process
-		xs[:, n] = get_state_per_temperature(chains)
+		xs[:, n] = copy.(get_state_per_temperature(chains))
 		index_process[:, n] = get_index_process(chains)
     end
+	# println(hcat(xs...))
 	return xs, (lps_forward, lps_backward), rejections, index_process, chains
 end

@@ -1,3 +1,4 @@
+
 struct PosteriorProblem{T, S, W, D} <: SamplingProblem
     V0::T
     sample_iid::S

@@ -116,7 +116,7 @@ function optimized_nrpt(
         # Run DEO
         x_round, (lpsf, lpsb), r, ind_proc, chains = DEO(chains, problem)
 
-        record_lps!(lp_recorder, )
+        record_lps!(lp_recorder, n, hcat(lpsf, lpsb))
         # Adapt the path
         obj_val = adapt_path!(problem, chains, schedule, opt_state, objective)
         # Save some stuff

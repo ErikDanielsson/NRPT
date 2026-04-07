@@ -3,22 +3,23 @@ function SKL_loss(
     ptchains::PTChains,
     schedule,
 ) where {E}
-    chains = ptchains.chains 
-    chunks = Iterators.partition(chains, cld(length(chains), Threads.nthreads()))
-    tasks = map(chunks) do chunk
-        Threads.@spawn acc_loss(problem, chunk, schedule)
-    end
-    partial_grads = fetch.(tasks)
-    l = sum(partial_grads)
-   return l
+    # chunks = Iterators.partition(chains, cld(length(chains), Threads.nthreads()))
+    # tasks = map(chunks) do chunk
+    #     Threads.@spawn acc_loss(problem, chunk, schedule)
+    # end
+    # partial_grads = fetch.(tasks)
+    # l = sum(partial_grads)
+    this_loss(chain::Chain) = _SKL_loss(problem, chain, schedule)
+    l = tmapreduce(this_loss, +, ptchains.chains; scheduler=:static, init=0.0)
+    return l
 end
 
 function acc_loss(problem::PathProblem{<:SamplingProblem, <:Path, E}, chains::AbstractVector{Chain}, schedule) where {E <: Explorer}
     return sum(SKL_loss(problem, chain, schedule) for chain in chains)
 end
 
-function SKL_loss(problem::PathProblem{<:SamplingProblem, <:Path, E}, chain::Chain, schedule::Vector{Float64}) where {E <: Explorer}
-    return mean(J(problem, chain.index, schedule, lps) for lps in eachcol(chain.log_potentials))
+function _SKL_loss(problem::PathProblem{<:SamplingProblem, <:Path, E}, chain::Chain, schedule::Vector{Float64}) where {E <: Explorer}
+    return mean(J(problem, chain.index, schedule, lps) for lps in eachcol(chain.base_potentials))
 end
 
 function SKL_gradient(
@@ -27,13 +28,15 @@ function SKL_gradient(
     schedule,
 ) where {E}
     chains = ptchains.chains 
-    chunks = Iterators.partition(chains, cld(length(chains), Threads.nthreads()))
-    tasks = map(chunks) do chunk
-        Threads.@spawn acc_grad(problem, chunk, schedule)
-    end
-    partial_grads = fetch.(tasks)
-    g = sum(partial_grads)
-   return g
+    # chunks = Iterators.partition(chains, cld(length(chains), Threads.nthreads()))
+    # tasks = map(chunks) do chunk
+    #     Threads.@spawn acc_grad(problem, chunk, schedule)
+    # end
+    # partial_grads = fetch.(tasks)
+    # g = sum(partial_grads)
+    this_grad(chain::Chain) = SKL_grad(problem, chain, schedule)
+    g = tmapreduce(this_grad, +, chains)
+    return g
 end
 
 function acc_grad(problem::PathProblem{<:SamplingProblem, P, E}, chains::AbstractVector{Chain}, schedule) where {P<:ParametrizedPath, E <: Explorer}
@@ -75,16 +78,16 @@ end
 
 
 function SKL_grad(problem::PathProblem{<:SamplingProblem, P, E}, chain::Chain, schedule::Vector{Float64}) where {P <: ParametrizedPath{<:AbstractArray}, E <: Explorer}
-    g1s = hcat([∇W(problem, chain.index, schedule, lps) for lps in eachcol(chain.log_potentials)]...)
-    g1 = cov(g1s', [J(problem, chain.index, schedule, lps) for lps in  eachcol(chain.log_potentials)])
-    g2 = mean(∇J(problem, chain.index, schedule, lps) for lps in eachcol(chain.log_potentials))
+    g1s = hcat([∇W(problem, chain.index, schedule, lps) for lps in eachcol(chain.base_potentials)]...)
+    g1 = cov(g1s', [J(problem, chain.index, schedule, lps) for lps in  eachcol(chain.base_potentials)])
+    g2 = mean(∇J(problem, chain.index, schedule, lps) for lps in eachcol(chain.base_potentials))
     return vec(g1 + g2)
 end
 
 function SKL_grad(problem::PathProblem{<:SamplingProblem, P, E}, chain::Chain, schedule::Vector{Float64}) where {P <: ParametrizedPath{<:Real}, E <: Explorer}
-    g1s = [∇W(problem, chain.index, schedule, lps) for lps in eachcol(chain.log_potentials)]
-    js = [J(problem, chain.index, schedule, lps) for lps in  eachcol(chain.log_potentials)]
+    g1s = [∇W(problem, chain.index, schedule, lps) for lps in eachcol(chain.base_potentials)]
+    js = [J(problem, chain.index, schedule, lps) for lps in  eachcol(chain.base_potentials)]
     g1 = cov(vec(g1s), js)
-    g2 = mean(∇J(problem, chain.index, schedule, lps) for lps in eachcol(chain.log_potentials))
+    g2 = mean(∇J(problem, chain.index, schedule, lps) for lps in eachcol(chain.base_potentials))
     return g1 + g2
 end
