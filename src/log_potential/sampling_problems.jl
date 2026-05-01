@@ -67,7 +67,6 @@ const _LOG_SQRT_2PI = 0.9189385332046728  # log(sqrt(2π))
 NormalProblem(D0::Normal, D1::Normal) = NormalProblem(params(D0)..., params(D1)...)
 
 sample_iid(problem::NormalProblem) = randn() * problem.σ0 + problem.μ0
-sample_iid(problem::NormalProblem) = randn() * problem.σ0 + problem.μ0
 
 function V0(problem::NormalProblem, x)
     z = (x - problem.μ0) / problem.σ0

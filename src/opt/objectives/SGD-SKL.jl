@@ -1,6 +1,7 @@
 function SKL_loss(
     problem::PathProblem{<:SamplingProblem, <:Path, E},
     ptchains::PTChains{N, T, Val{false}},
+    ::Val{false}
 ) where {E, N, T}
     l = 0.0
     for i in 1:N 
@@ -13,6 +14,7 @@ end
 function SKL_loss(
     problem::PathProblem{<:SamplingProblem, <:Path, E},
     ptchains::PTChains{N, T, Val{true}},
+    ::Val{true}
 ) where {E, N, T}
     l = tmapreduce(+, 1:N) do i
         per_chain_loss(problem.path, ptchains, i)
@@ -53,6 +55,7 @@ end
 function SKL_gradient(
     problem::PathProblem{<:SamplingProblem, <:Path, E},
     ptchains::PTChains{N, T, Val{false}},
+    ::Val{false}
 ) where {E, N, T}
     n_chains, iterations = size(ptchains)
     g_dim = length(extract_param(problem.path))
@@ -70,6 +73,7 @@ end
 function SKL_gradient(
     problem::PathProblem{<:SamplingProblem, <:Path, E},
     ptchains::PTChains{N, T, Val{true}},
+    ::Val{true}
 ) where {E, N, T}
     n_chains, iterations = size(ptchains)
     g_dim = length(extract_param(problem.path))

@@ -101,6 +101,12 @@ include("recorders/IndexProcess.jl")
 export IndexProcess, assign!
 include("recorders/SampleRecorder.jl")
 export SampleRecorder, get_round_samples
+include("recorders/ScheduleRecorder.jl")
+export ScheduleRecorder
+include("recorders/LogZRecorder.jl")
+export LogZRecorder
+include("recorders/LossRecorder.jl")
+export SKLRecorder
 
 # Statistics
 include("stats/barriers.jl")
@@ -113,6 +119,8 @@ export round_trip_completion_iters
 
 # Main algorithm
 include("DEO.jl")
+include("NRPTConfig.jl")
+export NRPTConfig
 include("nrpt.jl")
 export nrpt, optimized_nrpt
 

@@ -37,7 +37,7 @@ end
     @inbounds return @view(ptchains.base_lps[:, iteration, i])
 end
 
-function PTChains(x0::Vector{T}, init_schedule; threaded = true, dims = 2) where {T}
+function PTChains(x0::Vector{T}, init_schedule, threaded; dims = 2) where {T}
     n_chains = length(init_schedule)
     mut_chains = Vector{Chain}(undef, n_chains)
     for i in eachindex(mut_chains, x0)

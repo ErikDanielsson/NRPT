@@ -34,7 +34,8 @@ struct ISSKLLoss{P <: ParametrizedPath, Tr <: Val, PT <: PTChains}
     ref_lps::Matrix{Float64}
 end
 
-function ISSKLLoss(path::P, ptchains::PT, threaded=false) where {P <: ParametrizedPath, PT <: PTChains}
+
+function ISSKLLoss(path::P, ptchains::PT, threaded::Bool) where {P <: ParametrizedPath, PT <: PTChains}
     n_chains, iterations = size(ptchains)
     # Compute the log potential at ϕ_0
     ref_lps = Matrix{Float64}(undef, iterations, n_chains)
@@ -66,12 +67,11 @@ function (loss::ISSKLLoss{P, Val{false}, PT})(t::S) where {P <: ParametrizedPath
     return total
 end
 
-function (loss::ISSKLLoss{P, Val{false}, PT})(t::S) where {P <: ParametrizedPath, S <: AbstractVector, PT <: PTChains}
+function (loss::ISSKLLoss{P, Val{true}, PT})(t::S) where {P <: ParametrizedPath, S <: AbstractVector, PT <: PTChains}
     n_chains, iterations = size(loss.ptchains)
     T = eltype(t)
-    total = zero(T) 
-    target_lps = Vector{T}(undef, iterations)
-    @inbounds for i in 1:n_chains 
+    total = tmapreduce(+, 1:n_chains; scheduler=:static, init=zero(T)) do i 
+        target_lps = Vector{T}(undef, iterations)
         beta = loss.ptchains.schedule[i]
         # Compute the target log potential
         for j in 1:iterations
@@ -80,7 +80,7 @@ function (loss::ISSKLLoss{P, Val{false}, PT})(t::S) where {P <: ParametrizedPath
         end
         diff = target_lps - @view(loss.ref_lps[:, i])
         w = softmax!(diff)
-        total += J_fast(t, loss.path, w, target_lps, loss.ptchains, i)
+        return J_fast(t, loss.path, w, target_lps, loss.ptchains, i)
     end
     return total
 end
@@ -159,14 +159,15 @@ function adapt_path!(
     problem::PathProblem{<:SamplingProblem, P},
     ptchains::PTChains,
     opt_state::NewtonTrustRegionState,
-    ::SKLObjective = SKLObjective(),
+    ::SKLObjective,
+    threaded::Bool
 ) where {P <: ParametrizedPath}
-    loss = ISSKLLoss(problem.path, ptchains, false)
+    loss = ISSKLLoss(problem.path, ptchains, threaded)
 
     t = extract_param(problem.path)
     l = loss(t)
 
-    prog = Progress(opt_state.max_steps; desc="Newton trust region (autodiff)", offset=5)
+    prog = Progress(opt_state.max_steps; desc="Newton trust region (autodiff)", offset=7)
     ProgressMeter.update!(prog, 0, force=true, showvalues=[
         ("objective", l),
     ])

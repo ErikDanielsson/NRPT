@@ -9,11 +9,11 @@ SliceSampler() = SliceSampler(10., 3)
 @inline function _step_coord(
     explorer::SliceSampler,
     problem::PathProblem,
-    x::Vector{Float64},
+    x::S,
     β::Float64,
     coord_ref::Ref,
     lp_buff::LP
-) where {LP <: AbstractVector{Float64}}
+) where {LP <: AbstractVector{Float64}, S <: AbstractVector{<:Real}}
     z = log_potential!(problem, x, β, lp_buff) - rand(Exponential())
     if z == -Inf
         error("Slice sampler is outside support at point $x at β=$β, [V0, V1] = $(lp_buff)")
@@ -58,11 +58,11 @@ function _shrink_1d(
     L::Float64,
     R::Float64,
     z::Float64,
-    x::Vector{Float64},
+    x::S,
     β::Float64,
     coord_ref::Ref,
     lp_buff::LP
-) where {LP <: AbstractVector{Float64}}
+) where {LP <: AbstractVector{Float64}, S <: AbstractVector{<:Real},}
     start_val = coord_ref[]
     L_bar = L
     R_bar = R
@@ -100,11 +100,11 @@ function _accept_1d(
     L::Float64,
     R::Float64,
     z::Float64,
-    x::Vector{Float64},
+    x::S,
     y::Float64,
     coord_ref,
     lp_buff::Vector{Float64},
-)
+) where {S <: AbstractVector{<:Real}}
     start_val = coord_ref[]
     L_hat = L
     R_hat = R
@@ -159,14 +159,14 @@ end
 #     return y
 # end
 
-function step!(explorer::SliceSampler, problem::PathProblem, x::Vector{Float64}, β::Float64, lp_buff::LP) where {LP <: AbstractVector{Float64}}
+function step!(explorer::SliceSampler, problem::PathProblem, x::S, β::Float64, lp_buff::LP) where {LP <: AbstractVector{Float64}, S <: AbstractVector{<:Real}}
     for i in eachindex(x)
         coord_ref = Ref(x, i)
         _step_coord(explorer, problem, x, β, coord_ref, lp_buff)
     end
 end
 
-function step(explorer::SliceSampler, problem::PathProblem, x::Vector{Float64}, β::Float64, lp_buff::LP) where {LP <: AbstractVector{Float64}}
+function step(explorer::SliceSampler, problem::PathProblem, x::S, β::Float64, lp_buff::LP) where {LP <: AbstractVector{Float64}, S <: AbstractVector{Float64}}
     x = copy(x)
     step!(explorer, problem, x, β, lp_buff)
     return x
