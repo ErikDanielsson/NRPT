@@ -9,3 +9,9 @@ function step(explorer::IterExplorer, problem::PathProblem, x::T, β, lp_buff::L
     end
     return x
 end
+
+function step!(explorer::IterExplorer, problem::PathProblem, x::T, β, lp_buff::LP) where {T <: AbstractVector, LP <: AbstractVector{Float64}}
+    for _ in 1:explorer.n
+        step!(explorer.explorer, problem, x, β, lp_buff)
+    end
+end

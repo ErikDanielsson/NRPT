@@ -15,7 +15,7 @@ mutable struct PPathQ{T<:AbstractVector{<:Real}} <: ParametrizedPath{T}
     backend::AbstractADType
 end
 
-PPathQ(N::Int, backend::AbstractADType) = PPathQ([1.; zeros(N - 1)], nothing, backend)
+PPathQ(N::Int, backend::AbstractADType) = PPathQ([1.; zeros(N)], nothing, backend)
 
 (path::PPathQ)(t, log_potentials::LP, β) where {LP <: AbstractVector{Float64}} = begin
     V0, V1 = log_potentials
@@ -25,10 +25,12 @@ PPathQ(N::Int, backend::AbstractADType) = PPathQ([1.; zeros(N - 1)], nothing, ba
         return V1
     else
         c = @view(softmax(t)[2:end])
+        # d = 2.0@view(softmax(t[div(length(t), 2)+1:end])[2:end]) .- 1
         N = length(c)
         # println([N / i * softplus(i / N * (V0 - V1)) for i in 1:N])
-        forward  = sum(c[i] * N / i * softplus(i / N * (V0 - V1)) for i in 1:N)
-        return V0 * (1 - β) + β * V1 + (1 - β) * β * forward
+        forward   = sum(c[i] * N / i * softplus(i / N * (V0 - V1)) for i in 1:N)
+        # backward  = sum(d[i] * -N / i * softplus(-i / N * (V0 - V1)) for i in 1:N)
+        return V0 * (1 - β) + β * V1 + (1 - β) * β * forward 
     end
 end
 
@@ -39,7 +41,9 @@ end
 extract_param(path::PPathQ) = path.t
 
 function extract_reparam(path::PPathQ)
-    return softmax(path.t)[2:end]
+    t = path.t
+    c = @view(softmax(t)[2:end])
+    return c 
 end
 
 function set_param!(path::PPathQ, t::T) where {T <: AbstractVector}

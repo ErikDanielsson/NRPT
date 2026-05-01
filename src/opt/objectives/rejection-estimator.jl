@@ -101,8 +101,8 @@ function barrier_pair_loss(
     rs = [
         R(problem, chain1.index, schedule, lps1, lps2)
         for (lps1, lps2) in zip(
-            eachcol(chain1.log_potentials),
-            eachcol(chain2.log_potentials)
+            eachcol(chain1.base_potentials),
+            eachcol(chain2.base_potentials)
         )
     ]
     loss = mean(rs)

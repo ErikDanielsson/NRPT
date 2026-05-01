@@ -19,7 +19,11 @@ function compute_Λ(r, schedule; use_accept=false)
 	return sum(λ)
 end
 
-function make_schedule(r, schedule; use_accept=false, min_incr=1e-16)
+function proj_interval(x; a=0.0, b=1.0)
+	return min(b, max(a, x))
+end
+
+function make_schedule(r, schedule; use_accept=false, min_incr=1e-15)
 	λ = use_accept ? λ_est_accept(r) : λ_est_simple(r)
 	Λβ = sort([0; cumsum(λ)])
 	norm_Λβ = Λβ ./ last(Λβ)
@@ -39,16 +43,18 @@ function make_schedule(r, schedule; use_accept=false, min_incr=1e-16)
 		barrier = interpolate(schedule, Λβ, FritschCarlsonMonotonicInterpolation())
 	catch e
 		println(e)
+		println(schedule)
 		println(Λβ)
 		throw(e)
 	end
 	schedule = [0.0; generator.(uniform[2:end-1]); 1.0]	
 	if min_incr > 0.0
-		for i in 2:length(schedule)
-			if schedule[i] - schedule[i - 1] < min_incr
-				schedule[i] = schedule[i - 1] + min_incr
+		for i in 2:length(schedule) - 1
+			if abs(schedule[i] - schedule[i - 1]) < min_incr
+				schedule[i] = proj_interval(schedule[i - 1] + min_incr)
 			end
 		end
 	end
+	# @info "Schedule = $schedule"
 	return barrier, schedule
 end

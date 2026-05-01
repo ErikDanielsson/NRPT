@@ -13,3 +13,19 @@ function gmm_slice_sampler(dimension; mu=3.0, sigma=0.3, sigma_ref=0.3, steps=5)
         IterExplorer(SliceSampler(), steps)
     )
 end
+
+# GBM version: reference N(0, I) in z-space, target is N(0,I) * GMM (product distribution).
+# T(z) = z (identity), so z-space = x-space.
+struct GMLikelihood{D <: MultivariateDistribution} <: Likelihood
+    target::D
+end
+
+loglik(l::GMLikelihood, x) = logpdf(l.target, x)
+
+function gmm_gbm(dimension; mu=3.0, sigma=0.3, steps=5)
+    means  = _gmm_corner_means(dimension, mu)
+    target = MixtureModel(MvNormal[MvNormal(μ, sigma^2 * I) for μ in means])
+    gbm    = GaussianGBM(zeros(dimension), Matrix(1.0I, dimension, dimension))
+    sp     = GBMProblem(gbm, GMLikelihood(target))
+    return sp, IterExplorer(SliceSampler(), steps)
+end

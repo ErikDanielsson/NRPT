@@ -17,12 +17,35 @@ function V1(problem::PosteriorProblem, x)
 end
 
 abstract type DistributionProblem <: SamplingProblem end
+
+
+struct MvUnivariate{D} <: Distributions.ContinuousMultivariateDistribution
+    d::D
+end
+
+function Distributions._rand!(d::MvUnivariate, arr::AbstractArray{<:Real}) 
+    arr[1] = rand(d.d)
+    return arr
+end
+
+function Distributions._rand!(rng::AbstractRNG, d::MvUnivariate, arr::AbstractArray{<:Real}) 
+    arr[1] = rand(rng, d.d)
+    return arr
+end
+
+function Distributions._logpdf(d::MvUnivariate, arr)
+    return logpdf(d.d, arr[1])
+end
+
+Distributions.length(d::MvUnivariate) = 1
+
 struct GenericDistributionProblem <: DistributionProblem
-    D0::Distribution
-    D1::Distribution
+    D0::MultivariateDistribution
+    D1::MultivariateDistribution
 end
 
 sample_iid(problem::GenericDistributionProblem) = rand(problem.D0)
+sample_iid!(problem::GenericDistributionProblem, x) = rand!(problem.D0, x)
 
 function V0(problem::GenericDistributionProblem, x)
     return logpdf(problem.D0, x)
@@ -43,6 +66,7 @@ const _LOG_SQRT_2PI = 0.9189385332046728  # log(sqrt(2π))
 
 NormalProblem(D0::Normal, D1::Normal) = NormalProblem(params(D0)..., params(D1)...)
 
+sample_iid(problem::NormalProblem) = randn() * problem.σ0 + problem.μ0
 sample_iid(problem::NormalProblem) = randn() * problem.σ0 + problem.μ0
 
 function V0(problem::NormalProblem, x)

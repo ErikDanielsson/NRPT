@@ -19,8 +19,8 @@ end
 # Equals 1 when all weights are equal, approaches 0 when one weight dominates.
 function ess_ratio(log_weights::Vector{Float64})
     n   = length(log_weights)
-    ls  = logsumexp(log_weights)
-    ls2 = logsumexp(2 .* log_weights)
+    ls  = logsumexp_(log_weights)
+    ls2 = logsumexp_(2 .* log_weights)
     return exp(2ls - log(n) - ls2)
 end
 

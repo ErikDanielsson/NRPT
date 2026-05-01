@@ -9,3 +9,12 @@ function mvnormal_slice_sampler(dimension; mu=1.0, sigma0=1.0, sigma1=1.0, steps
         IterExplorer(SliceSampler(), steps)
     )
 end
+
+# GBM version: reference N(0, I) in z-space, target N(mu·1, sigma1²·I).
+# T(z) = z (identity), so the GBM reference and the sampling space coincide.
+function normal_gbm(dimension; mu=5.0, sigma=0.1, steps=5)
+    gbm = GaussianGBM(zeros(dimension), Matrix(1.0I, dimension, dimension))
+    lik = GaussianLikelihood(mu * ones(dimension), sigma)
+    sp  = GBMProblem(gbm, lik)
+    return sp, IterExplorer(SliceSampler(), steps)
+end

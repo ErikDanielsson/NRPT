@@ -6,7 +6,7 @@ end
 SliceSampler() = SliceSampler(10., 3)
 
 # 1D step: x is a scalar, lp is a Float64 -> Float64 log-potential closure
-function _step_coord(
+@inline function _step_coord(
     explorer::SliceSampler,
     problem::PathProblem,
     x::Vector{Float64},
@@ -16,7 +16,7 @@ function _step_coord(
 ) where {LP <: AbstractVector{Float64}}
     z = log_potential!(problem, x, β, lp_buff) - rand(Exponential())
     if z == -Inf
-        error("Slice sampler is outside support at point $x")
+        error("Slice sampler is outside support at point $x at β=$β, [V0, V1] = $(lp_buff)")
     elseif isnan(z)
         error("NaN in slice sampler at $x")
     end
@@ -28,12 +28,15 @@ function _step_coord(
     R = L + explorer.w
     K = explorer.p
 
-    coord_ref[] = L
+    @inbounds coord_ref[] = L
     lp_L = log_potential!(problem, x, β, lp_buff)
-    coord_ref[] = R
+    @inbounds coord_ref[] = R
     lp_R = log_potential!(problem, x, β, lp_buff)
 
-    while K > 0 && (z < lp_L || z < lp_R)
+    for _ in 1:K 
+        if !(z < lp_L || z < lp_R)
+            break
+        end
         V = rand()
         if V < 0.5
             L = 2L - R
@@ -44,7 +47,6 @@ function _step_coord(
             coord_ref[] = R
             lp_R = log_potential!(problem, x, β, lp_buff)
         end
-        K -= 1
     end
     coord_ref[] = start_val
     return _shrink_1d(explorer, problem, L, R, z, x, β, coord_ref, lp_buff)
@@ -141,9 +143,9 @@ end
 #     return _step_1d(explorer, lp, x)
 # end
 
-function step(explorer::SliceSampler, problem::PathProblem, x::Float64, β::Float64, lp_buff::LP) where {LP <: AbstractVector{Float64}}
+function step!(explorer::SliceSampler, problem::PathProblem, x::Float64, β::Float64, lp_buff::LP) where {LP <: AbstractVector{Float64}}
     lp(t::Float64) = log_potential!(problem, t, β, lp_buff)
-    return _step_1d(explorer, lp, x)
+    _step_1d(explorer, lp, x)
 end
 
 # # Multivariate dispatch: coordinate-wise slice sampling
@@ -157,12 +159,19 @@ end
 #     return y
 # end
 
-function step(explorer::SliceSampler, problem::PathProblem, x::Vector{Float64}, β::Float64, lp_buff::LP) where {LP <: AbstractVector{Float64}}
+function step!(explorer::SliceSampler, problem::PathProblem, x::Vector{Float64}, β::Float64, lp_buff::LP) where {LP <: AbstractVector{Float64}}
     for i in eachindex(x)
         coord_ref = Ref(x, i)
-        # println(coord_ref[])
-        xi = _step_coord(explorer, problem, x, β, coord_ref, lp_buff)
-        # println(xi)
+        _step_coord(explorer, problem, x, β, coord_ref, lp_buff)
     end
+end
+
+function step(explorer::SliceSampler, problem::PathProblem, x::Vector{Float64}, β::Float64, lp_buff::LP) where {LP <: AbstractVector{Float64}}
+    x = copy(x)
+    step!(explorer, problem, x, β, lp_buff)
     return x
+end
+
+function step(explorer::SliceSampler, problem::PathProblem, x::Float64, β::Float64, lp_buff::LP) where {LP <: AbstractVector{Float64}}
+    return step!(explorer, problem, x, β, lp_buff)
 end

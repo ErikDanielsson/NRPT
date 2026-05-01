@@ -1,12 +1,13 @@
 struct LinearPath <: StaticPath end
 
-function log_potential(::LinearPath, log_potentials::AbstractVector{Float64}, β::T) where {T <: Real}
+function log_potential(::LinearPath, log_potentials::AbstractVector{<:Real}, β::T) where {T <: Real}
     if β == 0.0
-        return log_potentials[1]
+        @inbounds return log_potentials[1]
     elseif β == 1.0
-        return log_potentials[2]
+        @inbounds return log_potentials[2]
     else
-        V0, V1 = log_potentials
+        @inbounds V0 = log_potentials[1]
+        @inbounds V1 = log_potentials[2]
         return (1 - β) * V0 + β * V1
     end
 end

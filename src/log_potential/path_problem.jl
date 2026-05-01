@@ -20,6 +20,13 @@ function step(problem::PathProblem, x, β)
     )
 end
 
+function step!(problem::PathProblem, x, β)
+    return (β == 0.0
+        ? sample_iid!(problem.problem, x)
+        : step!(problem.explorer, problem, x, β)
+    )
+end
+
 # log_potential(problem::PathProblem, x::T, β::Float64) where {T} = log_potential(problem.path, log_potentials(problem.problem, x), β)
 log_potential!(problem::PathProblem, x::T, β::Float64, lp_buff::LP) where {T, LP <: AbstractVector{Float64}} =
     log_potential(problem.path, base_potentials!(problem.problem, x, lp_buff), β)
@@ -32,6 +39,13 @@ function step(problem::PathProblem, x, β, lp_buff::AbstractVector{Float64})
     return (β == 0.0
         ? sample_iid(problem.problem)
         : step(problem.explorer, problem, x, β, lp_buff)
+    )
+end
+
+function step!(problem::PathProblem, x, β, lp_buff::AbstractVector{Float64})
+    return (β == 0.0
+        ? sample_iid!(problem.problem, x)
+        : step!(problem.explorer, problem, x, β, lp_buff)
     )
 end
 

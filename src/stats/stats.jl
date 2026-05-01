@@ -7,7 +7,7 @@ function count_chain_round_trips(ind_proc::Matrix{Int}, chain)
 	start_ind = -1
 	end_ind = -1
 	for j in 1:iterations
-		if ind_proc[chain, j] == 1 
+		if ind_proc[chain, j] == 1
 			if found_end && found_start
 				round_trips += 1
 				push!(inds, (start_ind, end_ind, j))
@@ -16,10 +16,10 @@ function count_chain_round_trips(ind_proc::Matrix{Int}, chain)
 			found_start = true
 			found_end = false
 		elseif ind_proc[chain, j] == n_chains
-			found_end = true 
+			found_end = true
 			end_ind = j
 		end
-	end	
+	end
 	return round_trips, inds
 end
 
@@ -36,6 +36,44 @@ function count_round_trips_per_round(ind_proc::Matrix{Int}, n_rounds)
 		for (_, e, _) in ends
 			r = div(e, iters_per_round)
 			rts[r+1] += 1
+		end
+	end
+	return rts
+end
+
+# Returns the iteration indices (column in proc) at which each round trip completes,
+# sorted ascending. Works on both Matrix{Int} and IndexProcess.
+function round_trip_completion_iters(ind_proc::Matrix{Int})
+	n_chains = size(ind_proc, 1)
+	iters = Int[]
+	for i in 1:n_chains
+		for (_, _, j) in count_chain_round_trips(ind_proc, i)[2]
+			push!(iters, j)
+		end
+	end
+	sort!(iters)
+end
+
+round_trip_completion_iters(ind_proc::IndexProcess) =
+	round_trip_completion_iters(ind_proc.proc)
+
+# IndexProcess dispatch — uses exact round boundaries from ind_proc.rounds.
+
+count_chain_round_trips(ind_proc::IndexProcess, chain) =
+	count_chain_round_trips(ind_proc.proc, chain)
+
+round_trip_rate(ind_proc::IndexProcess) =
+	round_trip_rate(ind_proc.proc)
+
+function count_round_trips_per_round(ind_proc::IndexProcess)
+	n_rounds    = length(ind_proc.rounds)
+	boundaries  = cumsum(ind_proc.rounds)
+	rts         = zeros(n_rounds)
+	n_chains    = size(ind_proc.proc, 1)
+	for i in 1:n_chains
+		for (_, e, _) in count_chain_round_trips(ind_proc, i)[2]
+			r = searchsortedfirst(boundaries, e)
+			r <= n_rounds && (rts[r] += 1)
 		end
 	end
 	return rts

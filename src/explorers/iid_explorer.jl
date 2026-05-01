@@ -4,18 +4,16 @@
 
 abstract type IIDExplorer <: Explorer end
 
-function step(explorer::IIDExplorer, problem::PathProblem, x, β)
-    return iid_explore(explorer, problem.path, problem.problem, β)
-end
-
 function step(explorer::IIDExplorer, problem::PathProblem, x, β, lp_buff::LP) where {LP <: AbstractVector{Float64}}
-    return iid_explore(explorer, problem.path, problem.problem, β)
+    return iid_explore(explorer, problem, β, lp_buff)
 end
 
 struct NormalIIDExplorer <: IIDExplorer end
 
-function iid_explore(::NormalIIDExplorer, path::Path, problem::NormalProblem, β)
-    η0, η1 = get_exponents(path, β)
-    μ_β, σ_β = exponents_to_params(problem, η0, η1)
+function iid_explore(::NormalIIDExplorer, problem::PathProblem, β, ::LP) where {LP <: AbstractVector{Float64}}
+    η0, η1 = get_exponents(problem.path, β)
+    μ_β, σ_β = exponents_to_params(problem.problem, η0, η1)
     return rand(Normal(μ_β, σ_β))   
 end
+
+

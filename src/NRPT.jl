@@ -2,19 +2,24 @@ module NRPT
 
 using Distributions, Random, LinearAlgebra, Interpolations
 using ProgressMeter, ADTypes, DelimitedFiles, OhMyThreads
-import DifferentiationInterface, BSplineKit
+using StaticArrays
+import DifferentiationInterface, BSplineKit, ForwardDiff
 
 include("helpers/misc.jl")
 include("helpers/polydecayaverager.jl")
 export cumavg
+include("helpers/bernsteinbasis.jl")
+export BernsteinBasis
 # Path problem 
 include("log_potential/path_problem.jl")
 export PathProblem, run_single_chain
 
 # Sampling problems
 include("log_potential/sampling_problems.jl")
-export PosteriorProblem, GenericDistributionProblem
+export PosteriorProblem, GenericDistributionProblem, MvUnivariate
 export NormalProblem, exponents_to_params
+include("log_potential/sampling_problems/gaussian_base_measure.jl")
+export GBM, GBMProblem, GaussianGBM, UniformGBM, BoundedUniformGBM, Likelihood, loglik, GaussianLikelihood
 
 # Path types
 include("log_potential/paths.jl")
@@ -38,6 +43,9 @@ export PPathBump
 include("log_potential/paths/PPathQ.jl")
 export PPathQ
 
+include("log_potential/paths/GBMPath.jl")
+export ScalingGBMPath
+
 include("log_potential/paths/spline-helpers.jl")
 include("log_potential/paths/PaperSplinePath.jl")
 export PaperSplinePath
@@ -55,6 +63,8 @@ include("explorers/slice_sampler.jl")
 export SliceSampler
 include("explorers/iid_explorer.jl")
 export NormalIIDExplorer
+include("explorers/rejection_explorer.jl")
+export RejectionExplorer
 
 include("Chain.jl")
 include("PTChains.jl")
@@ -79,11 +89,18 @@ include("opt/optimizers.jl")
 export ProximalStochOptState, NoOptState
 include("opt/objectives/trust_region.jl")
 include("opt/objectives/objectives.jl")
-include("opt/objectives/trust-region-autodiff.jl")
-include("opt/objectives/SKL.jl")
+include("opt/objectives/ISSAA-SKL.jl")
+include("opt/objectives/trust-region-autodiff-barrier.jl")
+include("opt/objectives/SGD-SKL.jl")
 include("opt/objectives/rejection-estimator.jl")
-export SKLObjective, BarrierObjective, TrustRegionState, NewtonTrustRegionState
+export SKLObjective, BarrierObjective, TrustRegionState, NewtonTrustRegionState, NewtonTrustRegionBarrierState
 include("opt/path_optimization.jl")
+
+# Recorders
+include("recorders/IndexProcess.jl")
+export IndexProcess, assign!
+include("recorders/SampleRecorder.jl")
+export SampleRecorder, get_round_samples
 
 # Statistics
 include("stats/barriers.jl")
@@ -92,6 +109,7 @@ include("stats/record_lps.jl")
 export get_round_lps
 include("stats/stats.jl")
 export round_trip_rate, count_chain_round_trips, count_round_trips_per_round
+export round_trip_completion_iters
 
 # Main algorithm
 include("DEO.jl")
@@ -100,16 +118,20 @@ export nrpt, optimized_nrpt
 
 # Problem library
 include("problem_library/mvnormal.jl")
-export mvnormal_slice_sampler
+export mvnormal_slice_sampler, normal_gbm
 include("problem_library/normal_iid.jl")
 export normal_iid
 include("problem_library/gmm.jl")
-export gmm_slice_sampler
+export gmm_slice_sampler, gmm_gbm
 include("problem_library/cauchy.jl")
 export cauchy_slice_sampler
 include("problem_library/unidentifiable_product.jl")
-export unidentifiable_product_slice_sampler
+export unidentifiable_product_slice_sampler, unidentifiable_product_gbm
 include("problem_library/ode/transfection.jl")
-export transfection_ode_slice_sampler, load_transfection_data
+export transfection_ode_slice_sampler, load_transfection_data, transfection_ode_gbm
+include("problem_library/ising.jl")
+export IsingModel, IsingGibbs
+
+
 
 end

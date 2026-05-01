@@ -48,3 +48,27 @@ function load_transfection_data(path)
     raw = readdlm(path, ',', Float64; skipstart=1)
     return hcat(raw[:, 1], raw[:, 3])
 end
+
+struct TransfectionLikelihood <: Likelihood
+    data::Matrix{Float64}
+end
+
+function loglik(l::TransfectionLikelihood, x)
+    km0 = 10^x[1]; δ = 10^x[2]; β_rate = 10^x[3]; t0 = 10^x[4]; σ = 10^x[5]
+    ll = 0.0
+    for i in axes(l.data, 1)
+        t, obs = l.data[i, 1], l.data[i, 2]
+        μ = _transfection_ode_mean(t, km0, δ, β_rate, t0)
+        (isnan(μ) || isinf(μ)) && (μ = 10000.0)
+        ll += logpdf(Normal(μ, σ), obs)
+    end
+    return ll
+end
+
+function transfection_ode_gbm(data::AbstractMatrix; steps=5)
+    gbm = BoundedUniformGBM(_TRANSFECTION_PRIOR_LB, _TRANSFECTION_PRIOR_UB)
+    lik = TransfectionLikelihood(Matrix{Float64}(data))
+    sp  = GBMProblem(gbm, lik)
+    explorer = IterExplorer(SliceSampler(), steps)
+    return sp, explorer
+end

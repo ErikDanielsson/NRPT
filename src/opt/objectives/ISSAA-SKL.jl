@@ -1,60 +1,87 @@
-# Trust-region Newton method using DifferentiationInterface for autodiff.
-#
-# Rather than using the analytically derived gradient formulas (∇J, ∇W
-# from trust_region.jl / SKL.jl), we differentiate the total IS-weighted
-# SKL loss L(t) directly with respect to the path parameter t.  Autodiff
-# handles the IS-weight correction automatically, so no manual Cov(∇W, J)
-# term is needed.  The Hessian is computed in the same pass, enabling a
-# regularised Newton step in place of a first-order SGD update.
-#
-# Each ParametrizedPath already implements (path::P)(t, lps, β) -> scalar,
-# so the path itself is the callable used for autodiff — no wrapper needed.
+# Importance sampling - sample average approximation - loss
+# Uses forward autodiff through SNIS to compute gradients and Hessians
+# at 
 
 
-# ── Building the autodiffable loss ────────────────────────────────────────
-
-# J_n(t, e_i): local SKL contribution for chain n, sample i.
-# Mirrors the J function in SKL.jl but takes t explicitly for autodiff.
-function _J_autodiff(path, t, n::Int, schedule, lps)
-    N = length(schedule)
-    if n == 1
-        return path(t, lps, schedule[1]) - path(t, lps, schedule[2])
-    elseif n == N
-        return path(t, lps, schedule[N]) - path(t, lps, schedule[N-1])
-    else
-        return (2path(t, lps, schedule[n])
-                - path(t, lps, schedule[n+1])
-                - path(t, lps, schedule[n-1]))
-    end
-end
-
-# Functor holding the IS-weighted SKL loss.
-# ref_lps[k][i] = log_potential(path, lps_i, β_k) frozen at φ₀ before the
-# first inner step; the IS weight for sample i in chain k is
-#   log wᵢ = path(t, lps_i, βₖ) − ref_lps[k][i].
-struct ISSKLLoss{P <: ParametrizedPath, C, S, R}
-    path::P
-    chains::C
-    schedule::S
-    ref_lps::R
-end
-
-function (loss::ISSKLLoss)(t)
+function J_fast(t, path, w, target_lps, ptchains::PTChains{N, V}, i::Int) where {N, V}
     total = zero(eltype(t))
-    function chain_loss(args)
-        chain, ref = args
-        n = chain.index
-        β = loss.schedule[n]
-        w = softmax([loss.path(t, lps, β) - ref[i]
-                 for (i, lps) in enumerate(eachcol(chain.base_potentials))])
-        Js = [_J_autodiff(loss.path, t, n, loss.schedule, lps)
-              for lps in eachcol(chain.base_potentials)]
-        return dot(w, Js)
+    if i == 1
+        @views @inbounds for j in eachindex(w, target_lps)
+            base_lps = base_potentials(ptchains, i, j)
+            total += w[j] * (target_lps[j] - path(t, base_lps, ptchains.schedule[i + 1]))
+        end
+        return total
+    elseif i == N
+        @views @inbounds for j in eachindex(w, target_lps)
+            base_lps = base_potentials(ptchains, i, j)
+            total += w[j] * (target_lps[j] - path(t, base_lps, ptchains.schedule[i - 1]))
+        end
+        return total
+    else
+        @views @inbounds for j in eachindex(w, target_lps)
+            base_lps = base_potentials(ptchains, i, j)
+            lp_pos = path(t, base_lps, ptchains.schedule[i + 1])
+            lp_neg = path(t, base_lps, ptchains.schedule[i - 1])
+            total += w[j] * (2target_lps[j] - lp_pos - lp_neg)
+        end
+        return total
     end
-    # for args in zip(loss.chains, loss.ref_lps)
-    #     total += chain_loss(args)
-    # end
-    total = tmapreduce(chain_loss, +, collect(zip(loss.chains, loss.ref_lps)); scheduler=:static, init=0.0)
+end
+
+struct ISSKLLoss{P <: ParametrizedPath, Tr <: Val, PT <: PTChains}
+    path::P
+    ptchains::PT
+    ref_lps::Matrix{Float64}
+end
+
+function ISSKLLoss(path::P, ptchains::PT, threaded=false) where {P <: ParametrizedPath, PT <: PTChains}
+    n_chains, iterations = size(ptchains)
+    # Compute the log potential at ϕ_0
+    ref_lps = Matrix{Float64}(undef, iterations, n_chains)
+    for i in 1:n_chains
+        β = ptchains.schedule[i]
+        for j in 1:iterations
+            ref_lps[j, i] = log_potential(path, base_potentials(ptchains, i, j), β)
+        end
+    end
+    return ISSKLLoss{P, Val{threaded}, PT}(path, ptchains, ref_lps)
+end
+
+function (loss::ISSKLLoss{P, Val{false}, PT})(t::S) where {P <: ParametrizedPath, S <: AbstractVector, PT <: PTChains}
+    n_chains, iterations = size(loss.ptchains)
+    T = eltype(t)
+    total = zero(T) 
+    target_lps = Vector{T}(undef, iterations)
+    @inbounds for i in 1:n_chains 
+        beta = loss.ptchains.schedule[i]
+        # Compute the target log potential
+        for j in 1:iterations
+            lps = base_potentials(loss.ptchains, i, j)
+            @inbounds target_lps[j] = loss.path(t, lps, beta)
+        end
+        diff = target_lps - @view(loss.ref_lps[:, i])
+        w = softmax!(diff)
+        total += J_fast(t, loss.path, w, target_lps, loss.ptchains, i)
+    end
+    return total
+end
+
+function (loss::ISSKLLoss{P, Val{false}, PT})(t::S) where {P <: ParametrizedPath, S <: AbstractVector, PT <: PTChains}
+    n_chains, iterations = size(loss.ptchains)
+    T = eltype(t)
+    total = zero(T) 
+    target_lps = Vector{T}(undef, iterations)
+    @inbounds for i in 1:n_chains 
+        beta = loss.ptchains.schedule[i]
+        # Compute the target log potential
+        for j in 1:iterations
+            lps = base_potentials(loss.ptchains, i, j)
+            @inbounds target_lps[j] = loss.path(t, lps, beta)
+        end
+        diff = target_lps - @view(loss.ref_lps[:, i])
+        w = softmax!(diff)
+        total += J_fast(t, loss.path, w, target_lps, loss.ptchains, i)
+    end
     return total
 end
 
@@ -110,35 +137,31 @@ function _min_ess(path, t, chains, schedule, ref_lps)
     )
 end
 
+function _min_ess(loss::ISSKLLoss{P, V, PT}, t) where {P, V, PT}
+    n_chains, iterations = size(loss.ptchains)
+    lp_buff = Vector{Float64}(undef, iterations)
+    min_ess = Inf
+    for i in 1:n_chains
+        for j in 1:iterations 
+            beta = loss.ptchains.schedule[i]
+            lps = base_potentials(loss.ptchains, i, j)
+            lp_buff[j] = loss.path(t, lps, beta) - loss.ref_lps[j, i]
+        end
+        this_ess = ess_ratio(lp_buff)
+        min_ess = this_ess < min_ess ? this_ess : min_ess
+    end
+    return min_ess
+end
 
-# ── adapt_path! ────────────────────────────────────────────────────────────
 
 # Newton method with ESS-based backtracking line search.
-#
-# Each inner iteration:
-#   1. Compute gradient g and Hessian H of the IS-weighted SKL loss.
-#   2. Compute the full Newton direction Δt = −(H + λI)⁻¹ g.
-#   3. Backtrack: try α = 1, 1/2, 1/4, … until ESS(t + α·Δt) ≥ δ.
-#      The path functor evaluates candidates without mutating path.t,
-#      so set_param! is only called once the step is accepted.
-#   4. If no α satisfies the ESS constraint, stop.
 function adapt_path!(
     problem::PathProblem{<:SamplingProblem, P},
     ptchains::PTChains,
-    schedule,
     opt_state::NewtonTrustRegionState,
     ::SKLObjective = SKLObjective(),
 ) where {P <: ParametrizedPath}
-    chains = ptchains.chains
-
-    # Freeze reference log-potentials at the current φ₀ before any inner step.
-    ref_lps = [
-        [log_potential(problem.path, lps, schedule[chain.index])
-         for lps in eachcol(chain.base_potentials)]
-        for chain in chains
-    ]
-
-    loss = ISSKLLoss(problem.path, chains, schedule, ref_lps)
+    loss = ISSKLLoss(problem.path, ptchains, false)
 
     t = extract_param(problem.path)
     l = loss(t)
@@ -147,13 +170,11 @@ function adapt_path!(
     ProgressMeter.update!(prog, 0, force=true, showvalues=[
         ("objective", l),
     ])
-    t = extract_param(problem.path)
+
     g = DifferentiationInterface.gradient(loss, opt_state.backend, t)
     H = DifferentiationInterface.hessian(loss, opt_state.backend, t)
     for n in 1:opt_state.max_steps
-       if sqrt(norm2(g)) < 1e-16
-            return l
-        end
+
         if nan_grad(g) || any(isnan, H)
             @warn "NaN in gradient or Hessian during Newton trust region update, stopping"
             break
@@ -163,14 +184,21 @@ function adapt_path!(
         push!(opt_state.min_eigvals, min_eig)
 
         Δt = _newton_step(g, H, min_eig, opt_state.λ_reg)
+        if sqrt(norm2(Δt)) < 1e-16
+            ProgressMeter.update!(prog, force=true, showvalues=[
+                ("objective", l),
+                ("Δt", Δt),
+            ])
+            return l
+        end
 
         # Backtracking line search: halve α until ESS ≥ δ or α is negligible.
         α     = 1.0
         new_t = nothing
         min_e = 0.0
-        while α > 2.0^-10
+        while α > 2^-20
             candidate = step!(t + α * Δt, opt_state.prox)
-            min_e = _min_ess(problem.path, candidate, chains, schedule, ref_lps)
+            min_e = _min_ess(loss, candidate)
             if min_e ≥ opt_state.δ
                 new_t = candidate
                 break
@@ -197,7 +225,6 @@ function adapt_path!(
         t = extract_param(problem.path)
         g = DifferentiationInterface.gradient!(loss, g, opt_state.backend, t)
         H = DifferentiationInterface.hessian!(loss, H, opt_state.backend, t)
-     
     end
 
     push!(opt_state.n_steps, opt_state.max_steps)

@@ -46,55 +46,56 @@ function optimized_nrpt(
     opt_state::Optimizer,
     seed = 2;
     n_rounds = 10,
-	warmup = 1,
     use_accept=false,
     steps_per_round=n -> 100,
     save_rejection=false,
     save_lps=false,
+    record_samples=true,
+    min_opt_ess=100,
     objective::PathObjective=SKLObjective()
 ) where {T}
 
     Random.seed!(seed)
     n_chains = length(schedule)
-    all_iterations = [steps_per_round(n) for n = warmup:n_rounds]
-    schedules = Matrix{Float64}(undef, n_chains, length(all_iterations) + 1)
+    all_iterations = [steps_per_round(n) for n in 1:n_rounds for _ in 1:2]
+    prepend!(all_iterations, 1)
+    schedules = Matrix{Float64}(undef, n_chains, length(all_iterations) ÷ 2 + 1)
     schedules[:, 1] = schedule
-    barriers = Vector{Any}(undef, length(all_iterations))
-    Λ_rej = Vector{Float64}(undef, length(all_iterations))
-    Λ_acc = Vector{Float64}(undef, length(all_iterations))
-    objective_vals = Vector{Union{Float64, Nothing}}(undef, length(all_iterations))
-    logZsf = Vector{Float64}(undef, length(all_iterations))
-    logZsb = Vector{Float64}(undef, length(all_iterations))
+    barriers = Vector{Any}(undef, n_rounds)
+    Λ_rej = Vector{Float64}(undef, n_rounds)
+    Λ_acc = Vector{Float64}(undef, n_rounds)
+    logZsf = Vector{Float64}(undef, n_rounds)
+    logZsb = Vector{Float64}(undef, n_rounds)
     rejections = Matrix{Float64}(undef, n_chains - 1, 0)
-    lp_recorder = LPRecorder(Val(save_lps), all_iterations, n_chains)
+    lp_recorder = LPRecorder(Val(save_lps), all_iterations[2:2:end], n_chains)
+    sample_recorder = make_sample_recorder(record_samples, n_chains, all_iterations, x0)
 
-    loss_averager = init_averager(Float64(n_chains), PolynomialDecayAverager(0.00))
-    Λ_averager = init_averager(Float64(n_chains), PolynomialDecayAverager(0.00))
+    loss_recorder = 
 
     opt_state = init(problem, opt_state)
 
     total_iters = sum(all_iterations)
-    x = Matrix{T}(undef, n_chains, 1 + 2 * total_iters)
-    x[:, 1] = x0
-    index_process = Matrix{Int}(undef, n_chains, 1 + 2 * total_iters)
-    index_process[:, 1] = 1:n_chains
+    # x = Matrix{T}(undef, n_chains, total_iters)
+    # x[:, 1] = x0
+    index_process = IndexProcess(n_chains, all_iterations, 1:n_chains)
+    # index_process[:, 1] = 1:n_chains
     col = 2
 
     chains = PTChains(x0, schedule)
-    progress = Progress(length(all_iterations); desc="Running optimized NRPT...")
-    ProgressMeter.update!(progress, 0, force=true, showvalues=[
+    progress = Progress(total_iters; desc="Running optimized NRPT...", enabled=true)
+    ProgressMeter.update!(progress, 1, force=true, showvalues=[
         ("objective", nothing),
         ("Λ", nothing),
         ("η", nothing),
         ("ϕ", extract_reparam(problem.path))
     ])
-    for n in eachindex(all_iterations)
-        iterations = all_iterations[n]
+    for n in 1:n_rounds
+        iterations = all_iterations[2n]
 
         # Set up the chains
         refresh_chains!(chains, schedule, iterations)
         # Run DEO
-        x_round, (lpsf, lpsb), r, ind_proc, chains = DEO(chains, problem)
+        (lpsf, lpsb), r = DEO!(chains, problem, index_process, sample_recorder)
         # Log some info
         new_logZf = stepping_stone(lpsf)
         new_logZb = -stepping_stone(lpsb)
@@ -104,31 +105,35 @@ function optimized_nrpt(
         # Adapt the schedule
         Λ_rej[n] = compute_Λ(r, schedule; use_accept=false)
         Λ_acc[n] = compute_Λ(r, schedule; use_accept=true)
-        b, schedule = make_schedule(r, schedule; use_accept=use_accept)
+        Λ_β, schedule = make_schedule(r, schedule; use_accept=use_accept)
         schedules[:, n + 1] = schedule
-        barriers[n] = b
-        x[:, col:col+iterations-1] = x_round
-        index_process[:, col:col+iterations-1] = ind_proc
+        barriers[n] = Λ_β
         col += iterations
 
-        # Set up the chains
+        iterations = all_iterations[2n + 1]
+
+        # Set up the for the chains for the next iteration 
         refresh_chains!(chains, schedule, iterations)
         # Run DEO
-        x_round, (lpsf, lpsb), r, ind_proc, chains = DEO(chains, problem)
+        (lpsf, lpsb), r = DEO!(chains, problem, index_process, sample_recorder)
+        record_lps!(lp_recorder, n, stack([lpsf, lpsb], dims=3))
 
-        record_lps!(lp_recorder, n, hcat(lpsf, lpsb))
         # Adapt the path
-        obj_val = adapt_path!(problem, chains, schedule, opt_state, objective)
+        if iterations > min_opt_ess
+            obj_val = adapt_path!(problem, chains, opt_state, objective)
+        else
+            obj_val = nothing
+        end
+
         # Save some stuff
         objective_vals[n] = obj_val
         Λ = compute_Λ(r, schedule; use_accept=false)
-        update!(Λ, n, Λ_averager)
-        update!(obj_val, n, loss_averager)
-        x[:, col:col+iterations-1] = x_round
-        index_process[:, col:col+iterations-1] = ind_proc
+
         col += iterations
-        next!(
+        ProgressMeter.update!(
             progress,
+            col,
+            force=true,
             showvalues=[
                 ("objective", obj_val),
                 ("Λ", Λ),
@@ -137,8 +142,13 @@ function optimized_nrpt(
             ]
         )
     end
+    ProgressMeter.update!(
+        progress,
+        total_iters,
+        force=true,
+    )
     return NamedTuple([
-        :x => x,
+        :x => sample_recorder,
         :schedules => schedules,
         :barriers => barriers,
         :Λ_rej => Λ_rej,
@@ -149,7 +159,8 @@ function optimized_nrpt(
         :rejections => rejections,
         :logZsf => logZsf,
         :logZsb => logZsb,
-        :problem => problem
+        :problem => problem,
+        :lp_recorder => lp_recorder
     ])
 end
 
@@ -162,3 +173,16 @@ optimized_nrpt(
     kwargs...
 ) where {T} = optimized_nrpt(x0, schedule, problem, NoOptState(), seed; kwargs...)
     
+# If we want to run a comparable NRPT without an optimizer
+function optimized_nrpt(
+    n_chains::Int,
+    problem::PathProblem,
+    seed = 2;
+    kwargs...
+)
+    schedule = collect(range(0, 1, n_chains))
+    x0 = [sample_iid(problem.problem) for _ in 1:n_chains]
+    return optimized_nrpt(x0, schedule, problem, NoOptState(), seed; kwargs...)
+end
+    
+
