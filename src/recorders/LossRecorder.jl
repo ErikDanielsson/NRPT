@@ -17,5 +17,8 @@ end
 function record!(recorder::SKLRecorder, Λ::Float64, skl::Float64)
     recorder.Λ_opt_round[recorder.opt_round] = Λ
     recorder.skl[recorder.opt_round] = skl
-    recorder.opt_round += 1
+    return recorder.opt_round += 1
 end
+
+get_objective_vals(lr::SKLRecorder) = lr.skl
+get_Λ_opt_round(lr::SKLRecorder) = lr.Λ_opt_round

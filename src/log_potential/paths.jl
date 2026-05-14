@@ -1,4 +1,3 @@
-
 log_potential(::Path, base_potentials, β) = throw(MethodError(log_potential, x, β))
 
 # Get exponents from a linear like path. This is only well defined

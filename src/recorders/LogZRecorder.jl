@@ -20,11 +20,11 @@ end
 function record_schedule!(r::LogZRecorder, logZsf::Float64, logZsb::Float64)
     r.schedule_logZsf[r.schedule_round] = logZsf
     r.schedule_logZsb[r.schedule_round] = logZsb
-    r.schedule_round += 1
+    return r.schedule_round += 1
 end
 
 function record_opt!(r::LogZRecorder, logZsf::Float64, logZsb::Float64)
     r.opt_logZsf[r.opt_round] = logZsf
     r.opt_logZsb[r.opt_round] = logZsb
-    r.opt_round += 1
+    return r.opt_round += 1
 end

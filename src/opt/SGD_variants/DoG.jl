@@ -17,7 +17,7 @@ end
 
 function step!(x, g, state::DoGState)
     state.acc_grad += norm2(g)
-	η = state.max_dist / sqrt(state.acc_grad + state.eps)
+    η = state.max_dist / sqrt(state.acc_grad + state.eps)
     state.max_dist = max(state.max_dist, sqrt(norm2(state.x0 - x)))
-	return (η, g)
+    return (η, g)
 end

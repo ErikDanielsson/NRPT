@@ -1,4 +1,3 @@
-
 struct PosteriorProblem{T, S, W, D} <: SamplingProblem
     V0::T
     sample_iid::S
@@ -23,12 +22,12 @@ struct MvUnivariate{D} <: Distributions.ContinuousMultivariateDistribution
     d::D
 end
 
-function Distributions._rand!(d::MvUnivariate, arr::AbstractArray{<:Real}) 
+function Distributions._rand!(d::MvUnivariate, arr::AbstractArray{<:Real})
     arr[1] = rand(d.d)
     return arr
 end
 
-function Distributions._rand!(rng::AbstractRNG, d::MvUnivariate, arr::AbstractArray{<:Real}) 
+function Distributions._rand!(rng::AbstractRNG, d::MvUnivariate, arr::AbstractArray{<:Real})
     arr[1] = rand(rng, d.d)
     return arr
 end

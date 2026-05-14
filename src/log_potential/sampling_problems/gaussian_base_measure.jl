@@ -39,10 +39,10 @@ struct GBMProblem{M <: GBM, L <: Likelihood} <: SamplingProblem
     l::L
 end
 
-V0(p::GBMProblem, z)       = V0(p.m, z)
-V1(p::GBMProblem, z)       = V0(p, z) + loglik(p.l, T(p.m, z))
-sample_iid(p::GBMProblem)  = sample_iid(p.m)
-sample_iid!(p::GBMProblem, x)  = sample_iid!(p.m, x)
+V0(p::GBMProblem, z) = V0(p.m, z)
+V1(p::GBMProblem, z) = V0(p, z) + loglik(p.l, T(p.m, z))
+sample_iid(p::GBMProblem) = sample_iid(p.m)
+sample_iid!(p::GBMProblem, x) = sample_iid!(p.m, x)
 
 # ── Concrete GBM types ────────────────────────────────────────────────────────
 
@@ -57,8 +57,8 @@ struct GaussianGBM{Tv <: AbstractVector{<:Real}, M <: AbstractMatrix{<:Real}} <:
     L::M
 end
 
-T(g::GaussianGBM, z)         = g.μ + g.L * z
-Base.length(g::GaussianGBM)  = length(g.μ)
+T(g::GaussianGBM, z) = g.μ + g.L * z
+Base.length(g::GaussianGBM) = length(g.μ)
 
 """
     UniformGBM(dim)
@@ -69,8 +69,8 @@ struct UniformGBM <: GBM
     dim::Int
 end
 
-T(::UniformGBM, z)          = cdf.(Normal(), z)
-Base.length(g::UniformGBM)   = g.dim
+T(::UniformGBM, z) = cdf.(Normal(), z)
+Base.length(g::UniformGBM) = g.dim
 
 """
     BoundedUniformGBM(lb, ub)
@@ -82,7 +82,7 @@ struct BoundedUniformGBM <: GBM
     ub::Vector{Float64}
 end
 
-T(g::BoundedUniformGBM, z)        = g.lb .+ (g.ub .- g.lb) .* cdf.(Normal(), z)
+T(g::BoundedUniformGBM, z) = g.lb .+ (g.ub .- g.lb) .* cdf.(Normal(), z)
 Base.length(g::BoundedUniformGBM) = length(g.lb)
 
 # ── Concrete Likelihood types ─────────────────────────────────────────────────

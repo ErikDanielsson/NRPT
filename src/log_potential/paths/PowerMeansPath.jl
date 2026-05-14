@@ -1,6 +1,5 @@
-
 # Generalization of q-path where $p = 1 - q$ is allowed for any value in [-\infty, 1)
-mutable struct PowerMeansPath{T<:Real} <: ParametrizedPath{T}
+mutable struct PowerMeansPath{T <: Real} <: ParametrizedPath{T}
     t::T
     prep
     backend::AbstractADType
@@ -44,5 +43,5 @@ extract_param(path::PowerMeansPath) = path.t
 extract_reparam(path::PowerMeansPath) = param_to_q(path.t)
 
 function set_param!(path::PowerMeansPath, t::T) where {T <: Real}
-    path.t = t
+    return path.t = t
 end

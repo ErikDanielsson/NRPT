@@ -1,10 +1,10 @@
-mutable struct PPathBump{T<:AbstractVector{<:Real}} <: ParametrizedPath{T}
+mutable struct PPathBump{T <: AbstractVector{<:Real}} <: ParametrizedPath{T}
     t::T
     prep
     backend::AbstractADType
 end
 
-function PPathBump{T}(t0::T, backend::AbstractADType) where {T<:AbstractVector{<:Real}}
+function PPathBump{T}(t0::T, backend::AbstractADType) where {T <: AbstractVector{<:Real}}
     return PPathBump(t0, nothing, backend)
 end
 
@@ -35,5 +35,5 @@ function extract_reparam(path::PPathBump)
 end
 
 function set_param!(path::PPathBump, t::T) where {T <: AbstractVector}
-    path.t = t
+    return path.t = t
 end

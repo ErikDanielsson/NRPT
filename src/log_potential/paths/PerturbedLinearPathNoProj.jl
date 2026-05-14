@@ -13,7 +13,7 @@
 #   the Jacobian ∂c/∂t is full-rank everywhere with no conditioning issues.
 #   Default initialisation t = 0 gives cᵢ = 1/n for all i and ∑ cᵢ = 1.
 
-function param_to_c(t::AbstractVector; b=1.0)
+function param_to_c(t::AbstractVector; b = 1.0)
     n = length(t)
     s = b - softplus(t[1])    # s/n where s = exp(t₀) = ∑ cᵢ > 0
     u = t[2:end]              # length n-1, free deviation parameters
@@ -24,7 +24,7 @@ function param_to_c(t::AbstractVector; b=1.0)
 end
 
 # Inverse: requires ∑ cᵢ > 0 (interior of feasible set).
-function c_to_param(c::AbstractVector; b=1.0)
+function c_to_param(c::AbstractVector; b = 1.0)
     n = length(c)
     s = sum(c)
     t0 = invsoftplus(b - s)
@@ -32,7 +32,7 @@ function c_to_param(c::AbstractVector; b=1.0)
     return [t0; u]
 end
 
-mutable struct PerturbedLinearPath{T<:AbstractVector{<:Real}} <: ParametrizedPath{T}
+mutable struct PerturbedLinearPath{T <: AbstractVector{<:Real}} <: ParametrizedPath{T}
     t::T
     prep
     backend::AbstractADType
@@ -68,5 +68,5 @@ extract_param(path::PerturbedLinearPath) = path.t
 extract_reparam(path::PerturbedLinearPath) = param_to_c(path.t)
 
 function set_param!(path::PerturbedLinearPath, t::T) where {T <: AbstractVector}
-    path.t = t
+    return path.t = t
 end

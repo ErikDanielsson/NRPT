@@ -5,25 +5,25 @@ struct IsingModel{M, I} <: SamplingProblem
 end
 
 _interaction(::Nothing) = 1.0
-_interaction(J::Real)   = Float64(J)
+_interaction(J::Real) = Float64(J)
 
 _moment(::Nothing) = 0.0
-_moment(h::Real)   = Float64(h)
+_moment(h::Real) = Float64(h)
 
 function V0(::IsingModel, ::BitArray)
     return 0.0
 end
 
 function sample_iid(model::IsingModel)
-    bitrand(model.N, model.N)
+    return bitrand(model.N, model.N)
 end
 
 # Log density: log p(x) ∝ J Σ_{<i,j>} s_i s_j + h Σ_i s_i,  s_i = 2x_i - 1.
 # Periodic boundary conditions; each pair counted once (right + down neighbors).
 function V1(model::IsingModel, x::BitArray)
-    N  = model.N
-    J  = _interaction(model.interaction)
-    h  = _moment(model.moment)
+    N = model.N
+    J = _interaction(model.interaction)
+    h = _moment(model.moment)
 
     log_density = 0.0
     @inbounds for j in 1:N
@@ -64,11 +64,11 @@ function step(explorer::IsingGibbs, problem::PathProblem, x::BitArray, β::Float
             im = i == 1 ? N : i - 1
             ip = i == N ? 1 : i + 1
 
-            neighbor_sum = (2*x[im,j]-1) + (2*x[ip,j]-1) +
-                           (2*x[i,jm]-1) + (2*x[i,jp]-1)
+            neighbor_sum = (2 * x[im, j] - 1) + (2 * x[ip, j] - 1) +
+                (2 * x[i, jm] - 1) + (2 * x[i, jp] - 1)
 
             h_eff = β * (J * neighbor_sum + h)
-            p_up  = 1.0 / (1.0 + exp(-2.0 * h_eff))
+            p_up = 1.0 / (1.0 + exp(-2.0 * h_eff))
             x[i, j] = rand() < p_up
         end
     end

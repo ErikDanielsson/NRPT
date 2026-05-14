@@ -13,7 +13,5 @@ struct NormalIIDExplorer <: IIDExplorer end
 function iid_explore(::NormalIIDExplorer, problem::PathProblem, β, ::LP) where {LP <: AbstractVector{Float64}}
     η0, η1 = get_exponents(problem.path, β)
     μ_β, σ_β = exponents_to_params(problem.problem, η0, η1)
-    return rand(Normal(μ_β, σ_β))   
+    return rand(Normal(μ_β, σ_β))
 end
-
-

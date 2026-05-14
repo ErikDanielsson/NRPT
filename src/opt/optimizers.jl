@@ -2,12 +2,12 @@ abstract type Optimizer end
 
 struct NoOptState <: Optimizer end
 
-init(problem, state::NoOptState) = state 
+init(problem, state::NoOptState) = state
 step!(x, g, state::NoOptState) = 0.0
 get_last_eta(state::NoOptState) = 0.0
-get_last_x(state::NoOptState) = nothing 
+get_last_x(state::NoOptState) = nothing
 
-struct ProximalStochOptState{S <: StochOptState, P <: ProximalState, T}  <: Optimizer
+struct ProximalStochOptState{S <: StochOptState, P <: ProximalState, T} <: Optimizer
     stochOptState::S
     proximalState::P
     xs::Vector{T}
@@ -32,7 +32,7 @@ function step!(x, g, state::ProximalStochOptState{S, P}) where {S, P}
     x = step!(x, state.proximalState)
     push!(state.xs, x)
     push!(state.etas, η)
-	return x
+    return x
 end
 
 # Trust region optimizer: wraps an inner optimizer and takes multiple IS-reweighted
@@ -44,12 +44,12 @@ struct TrustRegionState{O <: ProximalStochOptState} <: Optimizer
     n_steps::Vector{Int}
 end
 
-TrustRegionState(inner::ProximalStochOptState; δ=0.5, max_steps=20) =
+TrustRegionState(inner::ProximalStochOptState; δ = 0.5, max_steps = 20) =
     TrustRegionState(inner, Float64(δ), max_steps, Int[])
-TrustRegionState(opt::StochOptState, prox::ProximalState; δ=0.5, max_steps=20) =
-    TrustRegionState(ProximalStochOptState(opt, prox); δ=δ, max_steps=max_steps)
-TrustRegionState(opt::StochOptState; δ=0.5, max_steps=20) =
-    TrustRegionState(ProximalStochOptState(opt); δ=δ, max_steps=max_steps)
+TrustRegionState(opt::StochOptState, prox::ProximalState; δ = 0.5, max_steps = 20) =
+    TrustRegionState(ProximalStochOptState(opt, prox); δ = δ, max_steps = max_steps)
+TrustRegionState(opt::StochOptState; δ = 0.5, max_steps = 20) =
+    TrustRegionState(ProximalStochOptState(opt); δ = δ, max_steps = max_steps)
 
 get_last_eta(state::TrustRegionState) = get_last_eta(state.inner_opt)
 

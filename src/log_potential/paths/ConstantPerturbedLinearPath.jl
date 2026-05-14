@@ -1,4 +1,4 @@
-mutable struct ConstantPerturbedLinearPath{T<:AbstractVector{<:Real}} <: ParametrizedPath{T}
+mutable struct ConstantPerturbedLinearPath{T <: AbstractVector{<:Real}} <: ParametrizedPath{T}
     t::T
     basis
     prep
@@ -6,7 +6,7 @@ mutable struct ConstantPerturbedLinearPath{T<:AbstractVector{<:Real}} <: Paramet
 end
 
 function ConstantPerturbedLinearPath(n_knots::Int, backend::AbstractADType)
-    basis = collect(BSplineKit.BSplineBasis(BSplineKit.BSplineOrder(4), range(-100, 100, n_knots)))[2:end-1]
+    basis = collect(BSplineKit.BSplineBasis(BSplineKit.BSplineOrder(4), range(-100, 100, n_knots)))[2:(end - 1)]
     t0 = zeros(n_knots)
     return ConstantPerturbedLinearPath(t0, basis, nothing, backend)
 end
@@ -31,5 +31,5 @@ extract_param(path::ConstantPerturbedLinearPath) = path.t
 extract_reparam(path::ConstantPerturbedLinearPath) = path.t
 
 function set_param!(path::ConstantPerturbedLinearPath, t::T) where {T <: AbstractVector}
-    path.t = t
+    return path.t = t
 end

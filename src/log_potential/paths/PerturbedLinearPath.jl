@@ -18,7 +18,7 @@ function param_to_c(t::AbstractVector)
     mean_c = exp(t[1]) / n   # s/n where s = exp(t₀) = ∑ cᵢ > 0
     u = t[2:end]              # length n-1, free deviation parameters
     c = Vector{eltype(t)}(undef, n)
-    c[1:n-1] .= mean_c .+ u
+    c[1:(n - 1)] .= mean_c .+ u
     c[n] = mean_c - sum(u)
     return c
 end
@@ -29,11 +29,11 @@ function c_to_param(c::AbstractVector)
     s = sum(c)
     t0 = log(s)               # s = exp(t₀), so t₀ = log(∑ cᵢ)
     mean_c = s / n
-    u = c[1:n-1] .- mean_c
+    u = c[1:(n - 1)] .- mean_c
     return [t0; u]
 end
 
-mutable struct PerturbedLinearPath{T<:AbstractVector{<:Real}} <: ParametrizedPath{T}
+mutable struct PerturbedLinearPath{T <: AbstractVector{<:Real}} <: ParametrizedPath{T}
     t::T
     log_potential::Function
     prep
@@ -71,8 +71,8 @@ function gradient(path::PerturbedLinearPath, log_potentials::AbstractVector{Floa
 end
 
 extract_param(path::PerturbedLinearPath) = path.t
-extract_reparam(path::PerturbedLinearPath) = path.t 
+extract_reparam(path::PerturbedLinearPath) = path.t
 
 function set_param!(path::PerturbedLinearPath, t::T) where {T <: AbstractVector}
-    path.t = t
+    return path.t = t
 end

@@ -1,4 +1,4 @@
-mutable struct PaperSplinePath{T<:AbstractArray} <: ParametrizedPath{T}
+mutable struct PaperSplinePath{T <: AbstractArray} <: ParametrizedPath{T}
     theta::T
     prep
     backend::AbstractADType
@@ -22,10 +22,10 @@ end
 
 function PaperSplinePath(n_knots::Int, backend::AbstractADType)
     function make_knots(n_knots::Int, increasing::Bool)
-        knots = range(0, 1, n_knots + 2)[2:end-1]
+        knots = range(0, 1, n_knots + 2)[2:(end - 1)]
         return log.(increasing ? knots : 1 .- knots)
     end
-    theta0 = reshape(stack([make_knots(n_knots, false), make_knots(n_knots, true)], dims=1), 2 * n_knots)
+    theta0 = reshape(stack([make_knots(n_knots, false), make_knots(n_knots, true)], dims = 1), 2 * n_knots)
     return PaperSplinePath(theta0, nothing, backend)
 end
 
@@ -50,8 +50,8 @@ function set_param!(path::PaperSplinePath, theta::T) where {T <: AbstractArray}
     theta_ = reshape(theta, 2, n_knots)
     theta1 = fix_monotonicity(theta_[1, :], true)
     theta2 = fix_monotonicity(theta_[2, :], true)
-    fixed_theta = reshape(stack([theta1, theta2], dims=1), 2 * n_knots)
-    path.theta = fixed_theta
+    fixed_theta = reshape(stack([theta1, theta2], dims = 1), 2 * n_knots)
+    return path.theta = fixed_theta
 end
 
 monosign(v, incr::Bool) = incr ? v : -v
@@ -69,8 +69,8 @@ function fix_monotonicity(thetai, increasing::Bool)
     # Linearly interpolate between the the valid knots
     new_etas = Float64[]
     if length(monotone_subset) > 1
-        for (mi1, mi2) in zip(monotone_subset[1:end-1], monotone_subset[2:end])
-            for i in mi1:(mi2-1)
+        for (mi1, mi2) in zip(monotone_subset[1:(end - 1)], monotone_subset[2:end])
+            for i in mi1:(mi2 - 1)
                 t = (i - mi1) / (mi2 - mi1)
                 x = transform[mi1]
                 y = transform[mi2]

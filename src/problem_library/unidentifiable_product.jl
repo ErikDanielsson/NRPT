@@ -23,7 +23,7 @@ end
 function unidentifiable_product_slice_sampler(nt, nf)
     return (
         UnidProd(nt, nf),
-        SliceSampler()
+        SliceSampler(),
     )
 end
 
@@ -40,7 +40,7 @@ end
 function unidentifiable_product_gbm(nt::Int, nf::Int)
     gbm = UniformGBM(2)
     lik = UnidProdLikelihood(nt, nf)
-    sp  = GBMProblem(gbm, lik)
+    sp = GBMProblem(gbm, lik)
     explorer = SliceSampler()
     return sp, explorer
 end

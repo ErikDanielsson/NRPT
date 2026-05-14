@@ -6,8 +6,6 @@ function init(::PathProblem{<:StaticPath, E}, opt_state::StochOptState) where {E
 end
 
 
-
-
 ### TODO: Hot DoG like -- DoG with RMSProp accelaration
 
 # mutable struct DoWGState{S} <: StochOptState

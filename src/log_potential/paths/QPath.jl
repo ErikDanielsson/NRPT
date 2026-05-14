@@ -1,4 +1,4 @@
-mutable struct QPath{T<:Real} <: ParametrizedPath{T}
+mutable struct QPath{T <: Real} <: ParametrizedPath{T}
     t::T
     prep
     backend::AbstractADType
@@ -40,5 +40,5 @@ extract_param(path::QPath) = path.t
 extract_reparam(path::QPath) = param_to_p(path.t)
 
 function set_param!(path::QPath, t::T) where {T <: Real}
-    path.t = t
+    return path.t = t
 end

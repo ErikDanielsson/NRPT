@@ -3,17 +3,17 @@ mutable struct SliceSampler <: Explorer
     p::Int
 end
 
-SliceSampler() = SliceSampler(10., 3)
+SliceSampler() = SliceSampler(10.0, 3)
 
 # 1D step: x is a scalar, lp is a Float64 -> Float64 log-potential closure
 @inline function _step_coord(
-    explorer::SliceSampler,
-    problem::PathProblem,
-    x::S,
-    β::Float64,
-    coord_ref::Ref,
-    lp_buff::LP
-) where {LP <: AbstractVector{Float64}, S <: AbstractVector{<:Real}}
+        explorer::SliceSampler,
+        problem::PathProblem,
+        x::S,
+        β::Float64,
+        coord_ref::Ref,
+        lp_buff::LP
+    ) where {LP <: AbstractVector{Float64}, S <: AbstractVector{<:Real}}
     z = log_potential!(problem, x, β, lp_buff) - rand(Exponential())
     if z == -Inf
         error("Slice sampler is outside support at point $x at β=$β, [V0, V1] = $(lp_buff)")
@@ -33,7 +33,7 @@ SliceSampler() = SliceSampler(10., 3)
     @inbounds coord_ref[] = R
     lp_R = log_potential!(problem, x, β, lp_buff)
 
-    for _ in 1:K 
+    for _ in 1:K
         if !(z < lp_L || z < lp_R)
             break
         end
@@ -53,16 +53,16 @@ SliceSampler() = SliceSampler(10., 3)
 end
 
 function _shrink_1d(
-    explorer::SliceSampler,
-    problem::PathProblem,
-    L::Float64,
-    R::Float64,
-    z::Float64,
-    x::S,
-    β::Float64,
-    coord_ref::Ref,
-    lp_buff::LP
-) where {LP <: AbstractVector{Float64}, S <: AbstractVector{<:Real},}
+        explorer::SliceSampler,
+        problem::PathProblem,
+        L::Float64,
+        R::Float64,
+        z::Float64,
+        x::S,
+        β::Float64,
+        coord_ref::Ref,
+        lp_buff::LP
+    ) where {LP <: AbstractVector{Float64}, S <: AbstractVector{<:Real}}
     start_val = coord_ref[]
     L_bar = L
     R_bar = R
@@ -94,17 +94,17 @@ function _shrink_1d(
 end
 
 function _accept_1d(
-    explorer::SliceSampler,
-    problem::PathProblem,
-    β::Float64,
-    L::Float64,
-    R::Float64,
-    z::Float64,
-    x::S,
-    y::Float64,
-    coord_ref,
-    lp_buff::Vector{Float64},
-) where {S <: AbstractVector{<:Real}}
+        explorer::SliceSampler,
+        problem::PathProblem,
+        β::Float64,
+        L::Float64,
+        R::Float64,
+        z::Float64,
+        x::S,
+        y::Float64,
+        coord_ref,
+        lp_buff::Vector{Float64},
+    ) where {S <: AbstractVector{<:Real}}
     start_val = coord_ref[]
     L_hat = L
     R_hat = R
@@ -127,7 +127,7 @@ function _accept_1d(
             coord_ref[] = L_hat
             lp_L_hat = log_potential!(problem, x, β, lp_buff)
         end
-        
+
         if D && z >= lp_L_hat && z >= lp_R_hat
             coord_ref[] = start_val
             return false
@@ -145,7 +145,7 @@ end
 
 function step!(explorer::SliceSampler, problem::PathProblem, x::Float64, β::Float64, lp_buff::LP) where {LP <: AbstractVector{Float64}}
     lp(t::Float64) = log_potential!(problem, t, β, lp_buff)
-    _step_1d(explorer, lp, x)
+    return _step_1d(explorer, lp, x)
 end
 
 # # Multivariate dispatch: coordinate-wise slice sampling
@@ -164,6 +164,7 @@ function step!(explorer::SliceSampler, problem::PathProblem, x::S, β::Float64, 
         coord_ref = Ref(x, i)
         _step_coord(explorer, problem, x, β, coord_ref, lp_buff)
     end
+    return
 end
 
 function step(explorer::SliceSampler, problem::PathProblem, x::S, β::Float64, lp_buff::LP) where {LP <: AbstractVector{Float64}, S <: AbstractVector{Float64}}

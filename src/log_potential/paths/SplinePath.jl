@@ -1,4 +1,4 @@
-mutable struct SplinePath{T<:AbstractArray} <: ParametrizedPath{T}
+mutable struct SplinePath{T <: AbstractArray} <: ParametrizedPath{T}
     theta::T
     prep
     backend::AbstractADType
@@ -8,7 +8,7 @@ function params_to_knots_spline_path(params::AbstractVector, increasing::Bool)
     rel_params = [params; 1.0]
     summed = [0; cumsum(exp.(rel_params))]
     knots = summed / summed[end]
-    return increasing ? knots : 1. .- knots
+    return increasing ? knots : 1.0 .- knots
 end
 
 function get_exponents_spline_path(theta::AbstractArray, β)
@@ -38,5 +38,5 @@ extract_param(path::SplinePath) = path.theta
 extract_reparam(path::SplinePath) = theta_to_eta(path.theta, [false, true], param_to_knots_spline_path)
 
 function set_param!(path::SplinePath, theta::T) where {T <: AbstractArray}
-    path.theta = theta
+    return path.theta = theta
 end

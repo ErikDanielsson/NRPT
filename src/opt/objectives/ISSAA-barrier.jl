@@ -98,49 +98,28 @@ function _newton_step(g::Vector{Float64}, H::Matrix{Float64}, min_eig::Float64, 
     return (Symmetric(H) + λ * I) \ (-g)
 end
 
-# ESS criterions that determine the trust region size.
-# FixedrESSCriterion uses a fixed trus
 
-abstract type ESSCriterion end
-struct FixedrESSCriterion <: ESSCriterion
-    δ::Float64
-end
+# ── Optimizer state ────────────────────────────────────────────────────────
 
-get_lb(crit::FixedrESSCriterion, ::Int) = crit.δ
-
-struct DecayrESSCriterion <: ESSCriterion
-    c::Float64
-    rate::Float64
-end
-
-function get_lb(crit::DecayrESSCriterion, n_samples::Int)
-    return crit.c / n_samples^crit.rate
-end
-
-struct NewtonTrustRegionState{T, Pr <: ProximalState, E <: ESSCriterion} <: Optimizer
+struct NewtonTrustRegionState{T, Pr <: ProximalState} <: Optimizer
     prox::Pr
     backend::AbstractADType
+    δ::Float64          # ESS ratio threshold: stop inner loop when any chain drops below this
     max_steps::Int      # hard cap on inner Newton iterations per round
     λ_reg::Float64      # Tikhonov regularisation floor added to the Hessian diagonal
     n_steps::Vector{Int}
     min_eigvals::Vector{Float64}  # minimum eigenvalue of H each step (negative = non-convex)
     xs::T
-    crit::E
 end
 
-const DEFAULT_λ_reg = 1.0e-3
+NewtonTrustRegionState(backend::AbstractADType; δ = 0.9, max_steps = 20, λ_reg = 1.0e-3) =
+    NewtonTrustRegionState(NoProx(), backend, Float64(δ), max_steps, Float64(λ_reg), Int[], Float64[], [])
 
-NewtonTrustRegionState(backend::AbstractADType; δ = 0.9, max_steps = 20, λ_reg = DEFAULT_λ_reg, prox=NoProx()) =
-    NewtonTrustRegionState(prox, backend, max_steps, Float64(λ_reg), Int[], Float64[], [], FixedrESSCriterion(δ))
-
-NewtonTrustRegionState(backend::AbstractADType, crit::ESSCriterion; max_steps=20, λ_reg=DEFAULT_λ_reg, prox=NoProx()) = 
-    NewtonTrustRegionState(prox, backend, max_steps, Float64(λ_reg), Int[], Float64[], [], crit)
-
-# NewtonTrustRegionState(backend::AbstractADType; δ = 0.9, max_steps = 20, λ_reg = DEFAULT_λ_reg) =
-#     NewtonTrustRegionState(prox, backend, max_steps, Float64(λ_reg), Int[], Float64[], [], FixedrESSCriterion(δ))
+NewtonTrustRegionState(prox::ProximalState, backend::AbstractADType; δ = 0.9, max_steps = 20, λ_reg = 1.0e-3) =
+    NewtonTrustRegionState(prox, backend, Float64(δ), max_steps, Float64(λ_reg), Int[], Float64[], [])
 
 function init(problem::PathProblem{<:SamplingProblem, <:ParametrizedPath}, state::NewtonTrustRegionState)
-    return NewtonTrustRegionState(state.prox, state.backend, state.max_steps, state.λ_reg, Int[], Float64[], [extract_param(problem.path)], state.crit)
+    return NewtonTrustRegionState(state.prox, state.backend, state.δ, state.max_steps, state.λ_reg, Int[], Float64[], [extract_param(problem.path)])
 end
 
 get_last_eta(ntrs::NewtonTrustRegionState) = length(ntrs.min_eigvals) > 0 ? ntrs.min_eigvals[end] : nothing
@@ -179,8 +158,6 @@ function _min_ess(loss::ISSKLLoss{P, V, PT}, t) where {P, V, PT}
 end
 
 
-
-
 # Newton method with ESS-based backtracking line search.
 function adapt_path!(
         problem::PathProblem{<:SamplingProblem, P},
@@ -191,9 +168,6 @@ function adapt_path!(
         progress::Bool
     ) where {P <: ParametrizedPath}
     loss = ISSKLLoss(problem.path, ptchains, threaded)
-
-    n_samples = size(ptchains)[2]
-    rESS_lb = get_lb(opt_state.crit, n_samples)
 
     t = extract_param(problem.path)
     l = loss(t)
@@ -208,7 +182,8 @@ function adapt_path!(
     g = DifferentiationInterface.gradient(loss, opt_state.backend, t)
     H = DifferentiationInterface.hessian(loss, opt_state.backend, t)
 
-    min_eig = minimum(eigvals(Symmetric(H)))
+        min_eig = minimum(eigvals(Symmetric(H)))
+    @warn "$H"
     for n in 1:opt_state.max_steps
         if nan_grad(g) || any(isnan, H)
             @warn "NaN in gradient or Hessian during Newton trust region update, stopping"
@@ -221,7 +196,7 @@ function adapt_path!(
         push!(opt_state.min_eigvals, min_eig)
 
         Δt = _newton_step(g, H, min_eig, opt_state.λ_reg)
-        if sqrt(norm2(Δt)) < 1.0e-12
+        if sqrt(norm2(Δt)) < 1.0e-16
             ProgressMeter.update!(
                 prog, force = true, showvalues = [
                     ("objective", l),
@@ -235,10 +210,10 @@ function adapt_path!(
         α = 1.0
         new_t = nothing
         min_e = 0.0
-        while α > 2^-10
+        while α > 2^-20
             candidate = step!(t + α * Δt, opt_state.prox)
             min_e = _min_ess(loss, candidate)
-            if min_e ≥ rESS_lb
+            if min_e ≥ opt_state.δ
                 new_t = candidate
                 break
             end
@@ -247,26 +222,17 @@ function adapt_path!(
 
         if new_t === nothing
             push!(opt_state.n_steps, n)
-            next!(
-                prog, showvalues = [
-                    ("objective", l),
-                    ("rESS (bound)", "$min_e ($rESS_lb)"),
-                    ("α", α),
-                    ("||g||", sqrt(norm2(g))),
-                    ("λ_min(H)", min_eig),
-                ]
-            )
-            push!(opt_state.xs, t)
             return l
         end
 
         set_param!(problem.path, new_t)
+        push!(opt_state.xs, copy(new_t))
         l = loss(new_t)
 
         next!(
             prog, showvalues = [
                 ("objective", l),
-                ("rESS (bound)", "$min_e ($rESS_lb)"),
+                ("rESS", min_e),
                 ("α", α),
                 ("||g||", sqrt(norm2(g))),
                 ("λ_min(H)", min_eig),
@@ -278,6 +244,5 @@ function adapt_path!(
     end
 
     push!(opt_state.n_steps, opt_state.max_steps)
-    push!(opt_state.xs, t)
     return l
 end

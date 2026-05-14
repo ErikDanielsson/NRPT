@@ -14,7 +14,7 @@ function swap!(is::Indices, i1)
     @inbounds is.j[i2] = j1
     @inbounds is.i[j1] = i2
     @inbounds is.i[j2] = i1
-    return 
+    return
 end
 
 function invariance(inds::Indices)
@@ -64,7 +64,7 @@ end
 function refresh_chains!(ptchains::PTChains{N, T, Tr}, schedule, iterations; dims = 2) where {N, T, Tr}
     ptchains.schedule .= schedule
     if iterations != ptchains.iterations
-        ptchains.base_lps = Array{Float64, 3}(undef, dims, iterations, N) 
+        ptchains.base_lps = Array{Float64, 3}(undef, dims, iterations, N)
         ptchains.iterations = iterations
     end
     return
@@ -87,7 +87,7 @@ function explore!(problem::PathProblem, ptchains::PTChains{N, T, Val{true}}, ite
         beta, chain, base_lp_loc = get_beta_chain_j(ptchains, j, iteration)
         explore_chain!(problem, chain, beta, base_lp_loc)  # Explore on machine j
     end
-    return 
+    return
 end
 
 function explore!(problem::PathProblem, ptchains::PTChains{N, T, Val{false}}, iteration::Int) where {N, T}

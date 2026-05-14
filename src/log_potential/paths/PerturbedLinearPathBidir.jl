@@ -9,13 +9,13 @@
 # from PerturbedLinearPathNoProj.jl (∑ coefficients > 0, unconstrained
 # free parameters, full-rank Jacobian, default t=0 gives cᵢ=dᵢ=1/N).
 
-mutable struct PerturbedLinearPathBidir{T<:AbstractVector{<:Real}} <: ParametrizedPath{T}
+mutable struct PerturbedLinearPathBidir{T <: AbstractVector{<:Real}} <: ParametrizedPath{T}
     t::T
     prep
     backend::AbstractADType
 end
 
-function PerturbedLinearPathBidir{T}(c0::T, d0::T, backend::AbstractADType) where {T<:AbstractVector{<:Real}}
+function PerturbedLinearPathBidir{T}(c0::T, d0::T, backend::AbstractADType) where {T <: AbstractVector{<:Real}}
     @assert length(c0) == length(d0)
     t0 = [c_to_param(c0); c_to_param(d0)]
     return PerturbedLinearPathBidir(t0, nothing, backend)
@@ -34,8 +34,8 @@ PerturbedLinearPathBidir(N::Int, backend::AbstractADType) =
     else
         N = length(t) ÷ 2
         c = param_to_c(t[1:N])
-        d = param_to_c(t[N+1:2N])
-        forward  = sum(c[i] * softplus(V1 - V0 - 10(i - 1)) for i in eachindex(c))
+        d = param_to_c(t[(N + 1):2N])
+        forward = sum(c[i] * softplus(V1 - V0 - 10(i - 1)) for i in eachindex(c))
         backward = sum(d[i] * softplus(V0 - V1 - 10(i - 1)) for i in eachindex(d))
         return V0 * (1 - β) + β * V1 + (1 - β) * β * (forward + backward)
     end
@@ -49,9 +49,9 @@ extract_param(path::PerturbedLinearPathBidir) = path.t
 
 function extract_reparam(path::PerturbedLinearPathBidir)
     N = length(path.t) ÷ 2
-    return [param_to_c(path.t[1:N]); param_to_c(path.t[N+1:2N])]
+    return [param_to_c(path.t[1:N]); param_to_c(path.t[(N + 1):2N])]
 end
 
 function set_param!(path::PerturbedLinearPathBidir, t::T) where {T <: AbstractVector}
-    path.t = t
+    return path.t = t
 end

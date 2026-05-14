@@ -1,6 +1,6 @@
 # The idea of this path is that we only need to parametrize the exponent of the
 # likelihood since
-mutable struct SingleSplinePath{T<:AbstractArray} <: ParametrizedPath{T}
+mutable struct SingleSplinePath{T <: AbstractArray} <: ParametrizedPath{T}
     theta::T
     prep
     backend::AbstractADType
@@ -9,7 +9,7 @@ end
 function params_to_knots_single_spline_path(params::AbstractVector, increasing::Bool)
     summed = [0; cumsum(exp.(params))]
     knots = summed / summed[end]
-    return increasing ? knots : 1. .- knots
+    return increasing ? knots : 1.0 .- knots
 end
 
 function get_exponents_single_spline(theta::AbstractArray, β)
@@ -39,5 +39,5 @@ extract_reparam(path::SingleSplinePath) = theta_to_eta(path.theta, [false, true]
 
 function set_param!(path::SingleSplinePath, theta::T) where {T <: AbstractArray}
     # TODO: Do the sorting operation here
-    path.theta = theta
+    return path.theta = theta
 end

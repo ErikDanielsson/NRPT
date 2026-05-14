@@ -1,4 +1,4 @@
-mutable struct PowerPath{T<:Real} <: ParametrizedPath{T}
+mutable struct PowerPath{T <: Real} <: ParametrizedPath{T}
     t::T
     prep
     backend::AbstractADType
@@ -22,5 +22,5 @@ get_exponents(path::PowerPath, β) = [(1 - β)^path.t, β^path.t]
 extract_param(path::PowerPath) = path.t
 extract_reparam(path::PowerPath) = path.t
 function set_param!(path::PowerPath, t::T) where {T <: Real}
-    path.t = t
+    return path.t = t
 end

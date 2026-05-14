@@ -15,4 +15,5 @@ function iid_explore(explorer::RejectionExplorer, problem::PathProblem, β::Floa
             return y
         end
     end
+    return
 end

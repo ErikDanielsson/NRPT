@@ -4,8 +4,8 @@ mutable struct PolynomialDecayAverager{T, P <: Union{Nothing, Vector{T}}}
     gamma::Float64
 end
 
-PolynomialDecayAverager(gamma; save_iterates=false) =
-    PolynomialDecayAverager(nothing, save_iterates ? [nothing] : nothing , gamma)
+PolynomialDecayAverager(gamma; save_iterates = false) =
+    PolynomialDecayAverager(nothing, save_iterates ? [nothing] : nothing, gamma)
 
 function init_averager(x0, averager::PolynomialDecayAverager{Nothing, Vector{Nothing}})
     return PolynomialDecayAverager(x0, [x0], averager.gamma)
@@ -23,11 +23,11 @@ end
 function update!(x::T, t, averager::PolynomialDecayAverager{T, Vector{T}}) where {T}
     new_x_bar_t = next_iterate(x, averager.x_bar_t, t, averager.gamma)
     averager.x_bar_t = new_x_bar_t
-    push!(averager.xs, new_x_bar_t)
+    return push!(averager.xs, new_x_bar_t)
 end
 
 function update!(x::T, t, averager::PolynomialDecayAverager{T, Nothing}) where {T}
-    averager.x_bar_t = next_iterate(x, averager.x_bar_t, t, averager.gamma)
+    return averager.x_bar_t = next_iterate(x, averager.x_bar_t, t, averager.gamma)
 end
 
 function get_average(averager::PolynomialDecayAverager{T, P}) where {T, P}
@@ -40,7 +40,7 @@ end
 
 # Cumulative average of a vector with polynomial decay, returning all intermediate averages
 function cumavg(xs::AbstractVector{T}, gamma) where {T}
-    averager = init_averager(xs[1], PolynomialDecayAverager(gamma; save_iterates=true))
+    averager = init_averager(xs[1], PolynomialDecayAverager(gamma; save_iterates = true))
     for t in 2:length(xs)
         update!(xs[t], t, averager)
     end

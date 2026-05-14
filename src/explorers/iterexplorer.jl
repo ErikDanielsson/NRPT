@@ -14,4 +14,5 @@ function step!(explorer::IterExplorer, problem::PathProblem, x::T, β, lp_buff::
     for _ in 1:explorer.n
         step!(explorer.explorer, problem, x, β, lp_buff)
     end
+    return
 end

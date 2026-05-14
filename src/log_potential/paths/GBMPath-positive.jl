@@ -12,13 +12,13 @@ V0β(sbcm::ScalingBaseMeasureChange, V0) = V0β(sbcm.c, V0)
 mutable struct ScalingGBMPath{C <: AbstractVector{<:Real}, P <: Path} <: GBMPath{C}
     c::C
     path::P
-    basis::ConvexBernstein
+    basis::Bernstein
     prep
     backend::AbstractADType
 end
 
 function c_to_τ(path::ScalingGBMPath, c, β)
-    return exp(path.basis(c, β))
+    return path.basis(expc, β)
 end
 
 function c_to_τ(path::ScalingGBMPath, β)
@@ -31,7 +31,7 @@ end
 
 function ScalingGBMPath(order::Int, endpoint::Bool, path::P, backend::AbstractADType) where {P <: Path}
     basis, c0 = generate_basis_and_vector(order, endpoint)
-    c0[1] = 0.0
+    println(c0)
     return ScalingGBMPath{Vector{Float64}, P}(c0, path, basis, nothing, backend)
 end
 

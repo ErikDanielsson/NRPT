@@ -7,25 +7,28 @@ function base_potentials!(problem::SamplingProblem, x::T, lp_buff::LP) where {T,
 end
 abstract type Path end
 abstract type Explorer end
-struct PathProblem{T <: SamplingProblem, P <: Path, E <: Explorer} 
+struct PathProblem{T <: SamplingProblem, P <: Path, E <: Explorer}
     problem::T
-	path::P
-	explorer::E
+    path::P
+    explorer::E
 end
 
-function step(problem::PathProblem, x, β)
-    return (β == 0.0
-        ? sample_iid(problem.problem)
-        : step(problem.explorer, problem, x, β)
-    )
-end
+# function step(problem::PathProblem, x, β)
+#     println("hello!")
+#     return (
+#         β == 0.0
+#             ? sample_iid(problem.problem)
+#             : step(problem.explorer, problem, x, β)
+#     )
+# end
 
-function step!(problem::PathProblem, x, β)
-    return (β == 0.0
-        ? sample_iid!(problem.problem, x)
-        : step!(problem.explorer, problem, x, β)
-    )
-end
+# function step!(problem::PathProblem, x, β)
+#     return (
+#         β == 0.0
+#             ? sample_iid!(problem.problem, x)
+#             : step!(problem.explorer, problem, x, β)
+#     )
+# end
 
 # log_potential(problem::PathProblem, x::T, β::Float64) where {T} = log_potential(problem.path, log_potentials(problem.problem, x), β)
 log_potential!(problem::PathProblem, x::T, β::Float64, lp_buff::LP) where {T, LP <: AbstractVector{Float64}} =
@@ -36,23 +39,25 @@ base_potentials!(problem::PathProblem, x::T, lp_buff::LP) where {T, LP <: Abstra
     base_potentials!(problem.problem, x, lp_buff)
 
 function step(problem::PathProblem, x, β, lp_buff::AbstractVector{Float64})
-    return (β == 0.0
-        ? sample_iid(problem.problem)
-        : step(problem.explorer, problem, x, β, lp_buff)
+    return (
+        β == 0.0
+            ? sample_iid(problem.problem)
+            : step(problem.explorer, problem, x, β, lp_buff)
     )
 end
 
 function step!(problem::PathProblem, x, β, lp_buff::AbstractVector{Float64})
-    return (β == 0.0
-        ? sample_iid!(problem.problem, x)
-        : step!(problem.explorer, problem, x, β, lp_buff)
+    return (
+        β == 0.0
+            ? sample_iid!(problem.problem, x)
+            : step!(problem.explorer, problem, x, β, lp_buff)
     )
 end
 
-function run_single_chain(x::T, problem::PathProblem, β, n::Int) where {T}  
+function run_single_chain(x::T, problem::PathProblem, β, n::Int) where {T}
     xs = Vector{T}(undef, n)
     lp_buff = zeros(2)
-    for i in 1:n-1
+    for i in 1:(n - 1)
         xs[i] = copy(x)
         x = step(problem, x, β, lp_buff)
     end

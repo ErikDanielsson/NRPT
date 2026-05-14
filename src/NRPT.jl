@@ -9,8 +9,8 @@ include("helpers/misc.jl")
 include("helpers/polydecayaverager.jl")
 export cumavg
 include("helpers/bernsteinbasis.jl")
-export BernsteinBasis
-# Path problem 
+export ConvexBernstein
+# Path problem
 include("log_potential/path_problem.jl")
 export PathProblem, run_single_chain
 
@@ -23,7 +23,7 @@ export GBM, GBMProblem, GaussianGBM, UniformGBM, BoundedUniformGBM, Likelihood, 
 
 # Path types
 include("log_potential/paths.jl")
-export get_exponents, extract_params 
+export get_exponents, extract_params
 include("log_potential/paths/LinearPath.jl")
 export LinearPath
 include("log_potential/paths/PerturbedLinearPathNoProj.jl")
@@ -42,9 +42,16 @@ include("log_potential/paths/PPathBump.jl")
 export PPathBump
 include("log_potential/paths/PPathQ.jl")
 export PPathQ
+include("log_potential/paths/final-ppaths/SymmetricPerturbed.jl")
+include("log_potential/paths/final-ppaths/AsymmetricPerturbed.jl")
+include("log_potential/paths/final-ppaths/AsymmetricTwoParams.jl")
+include("log_potential/paths/final-ppaths/AsymmetricTwoParamsNeg.jl")
+export SymmetricPerturbed, AsymmetricPerturbed, AsymmetricTwoParamPerturbed, AsymmetricTwoParamNegPerturbed
 
 include("log_potential/paths/GBMPath.jl")
 export ScalingGBMPath
+
+
 
 include("log_potential/paths/spline-helpers.jl")
 include("log_potential/paths/PaperSplinePath.jl")
@@ -84,29 +91,30 @@ export AdagradState
 include("opt/SGD_variants/ScaledAdagrad.jl")
 export ScaledAdagradState
 include("opt/proximal_operators.jl")
-export ProximalState, NoProx, ProjectionState, Box, SumConstraint, project
+export ProximalState, NoProx, ProjectionState, LowerBound, Box, SumConstraint, project
 include("opt/optimizers.jl")
 export ProximalStochOptState, NoOptState
 include("opt/objectives/trust_region.jl")
 include("opt/objectives/objectives.jl")
 include("opt/objectives/ISSAA-SKL.jl")
+export NewtonTrustRegionState, ESSCriterion, FixedrESSCriterion, DecayrESSCriterion
 include("opt/objectives/trust-region-autodiff-barrier.jl")
 include("opt/objectives/SGD-SKL.jl")
 include("opt/objectives/rejection-estimator.jl")
-export SKLObjective, BarrierObjective, TrustRegionState, NewtonTrustRegionState, NewtonTrustRegionBarrierState
+export SKLObjective, BarrierObjective, TrustRegionState, NewtonTrustRegionBarrierState
 include("opt/path_optimization.jl")
 
 # Recorders
 include("recorders/IndexProcess.jl")
-export IndexProcess, assign!
+export IndexProcess, get_round_index_proc, round_trip_rate
 include("recorders/SampleRecorder.jl")
 export SampleRecorder, get_round_samples
 include("recorders/ScheduleRecorder.jl")
-export ScheduleRecorder
+export ScheduleRecorder, get_barriers, get_schedules, get_Λ_rej, get_Λ_acc
 include("recorders/LogZRecorder.jl")
 export LogZRecorder
 include("recorders/LossRecorder.jl")
-export SKLRecorder
+export SKLRecorder, get_objective_vals, get_Λ_opt_round
 
 # Statistics
 include("stats/barriers.jl")
@@ -139,7 +147,6 @@ include("problem_library/ode/transfection.jl")
 export transfection_ode_slice_sampler, load_transfection_data, transfection_ode_gbm
 include("problem_library/ising.jl")
 export IsingModel, IsingGibbs
-
 
 
 end

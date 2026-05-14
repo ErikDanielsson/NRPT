@@ -23,5 +23,10 @@ function record!(r::ScheduleRecorder, schedule::Vector{Float64}, Λ_β, Λ_rej::
     r.barriers[r.round] = Λ_β
     r.Λ_rej[r.round] = Λ_rej
     r.Λ_acc[r.round] = Λ_acc
-    r.round += 1
+    return r.round += 1
 end
+
+get_barriers(sr::ScheduleRecorder) = sr.barriers
+get_schedules(sr::ScheduleRecorder) = sr.schedules
+get_Λ_rej(sr::ScheduleRecorder) = sr.Λ_rej
+get_Λ_acc(sr::ScheduleRecorder) = sr.Λ_acc
