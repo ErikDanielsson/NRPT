@@ -1,8 +1,6 @@
 # Importance sampling - sample average approximation - loss
 # Uses forward autodiff through SNIS to compute gradients and Hessians
-# at
-
-
+# of the deterministic objective
 function J_fast(t, path, w, target_lps, ptchains::PTChains{N, V}, i::Int) where {N, V}
     total = zero(eltype(t))
     if i == 1
@@ -146,10 +144,7 @@ end
 get_last_eta(ntrs::NewtonTrustRegionState) = length(ntrs.min_eigvals) > 0 ? ntrs.min_eigvals[end] : nothing
 
 
-# ── ESS helper ────────────────────────────────────────────────────────────
-
 # Minimum ESS ratio across all chains at a candidate parameter value t.
-# Uses the path functor directly — no set_param! required.
 function _min_ess(path, t, chains, schedule, ref_lps)
     return minimum(
         ess_ratio(
