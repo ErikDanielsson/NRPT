@@ -21,14 +21,13 @@ using StatsPlots
     init_schedule = collect(range(0, 1, n_chains))
     run2 = optimized_nrpt(
         x0, init_schedule, ptproblem, optimizer;
-        warmup=1,
         n_rounds=n_rounds,
         steps_per_round=n -> 100
     )
-    @test run.objective_vals[1] > 1000
-    @test run.objective_vals[end] < 50
-    @test run.Λ_rej[1] == 9.0
-    @test run.Λ_rej[end] < 6
+    @test run.loss_recorder.skl[1] > 1000
+    @test run.loss_recorder.skl[end] < 50
+    @test run.schedule_recorder.Λ_rej[1] == 9.0
+    @test run.schedule_recorder.Λ_rej[end] < 6
 end
 
 @testset "normal-slice-test" begin
@@ -45,14 +44,13 @@ end
     init_schedule = collect(range(0, 1, n_chains))
     run = optimized_nrpt(
         x0, init_schedule, ptproblem, optimizer;
-        warmup=1,
         n_rounds=n_rounds,
         steps_per_round=n -> 100
     )
-    @test run.objective_vals[1] > 1000
-    @test run.objective_vals[end] < 50
-    @test run.Λ_rej[1] == 9.0
-    @test run.Λ_rej[end] < 6
+    @test run.loss_recorder.skl[1] > 1000
+    @test run.loss_recorder.skl[end] < 50
+    @test run.schedule_recorder.Λ_rej[1] == 9.0
+    @test run.schedule_recorder.Λ_rej[end] < 6
 end
 
 @testset "barrier-objective-test" begin
@@ -69,12 +67,11 @@ end
     init_schedule = collect(range(0, 1, n_chains))
     run = optimized_nrpt(
         x0, init_schedule, ptproblem, optimizer;
-        warmup=1,
         n_rounds=n_rounds,
         steps_per_round=n -> 100,
         objective=BarrierObjective()
     )
     # Barrier should decrease as the path is optimized
-    @test run.objective_vals[end] < run.objective_vals[1]
-    @test run.Λ_rej[end] < 6
+    @test run.loss_recorder.skl[end] < run.loss_recorder.skl[1]
+    @test run.schedule_recorder.Λ_rej[end] < 6
 end
