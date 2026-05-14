@@ -7,6 +7,13 @@ step!(x, g, state::NoOptState) = 0.0
 get_last_eta(state::NoOptState) = 0.0
 get_last_x(state::NoOptState) = nothing
 
+abstract type StochOptState end
+
+function init(::PathProblem{<:StaticPath, E}, opt_state::StochOptState) where {E}
+    @warn "You are trying to optimize a static path! Ignoring optimizer"
+    return opt_state
+end
+
 struct ProximalStochOptState{S <: StochOptState, P <: ProximalState, T} <: Optimizer
     stochOptState::S
     proximalState::P
