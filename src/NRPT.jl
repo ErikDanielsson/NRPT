@@ -52,7 +52,6 @@ include("log_potential/paths/GBMPath.jl")
 export ScalingGBMPath
 
 
-
 include("log_potential/paths/spline-helpers.jl")
 include("log_potential/paths/PaperSplinePath.jl")
 export PaperSplinePath

@@ -4,7 +4,7 @@ mutable struct AsymmetricTwoParamPerturbed{T <: AbstractVector{<:Real}} <: Param
     backend::AbstractADType
 end
 
-AsymmetricTwoParamPerturbed(backend::AbstractADType=AutoForwardDiff()) = AsymmetricTwoParamPerturbed([-10., 0.0], nothing, backend)
+AsymmetricTwoParamPerturbed(backend::AbstractADType = AutoForwardDiff()) = AsymmetricTwoParamPerturbed([-10.0, 0.0], nothing, backend)
 
 (path::AsymmetricTwoParamPerturbed)(t, log_potentials::LP, β) where {LP <: AbstractVector{<:Real}} = begin
     V0, V1 = log_potentials

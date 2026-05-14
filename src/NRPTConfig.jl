@@ -34,7 +34,7 @@ function Base.show(io::IO, config::NRPTConfig)
     println(io, "  objective:         $(typeof(config.objective))")
     println(io, "  use_accept:        $(config.use_accept)")
     println(io, "  seed:              $(config.seed)")
-    println(io, "  progress:          $(config.progress)")
+    return println(io, "  progress:          $(config.progress)")
 end
 
 # Constructor 1: explicit x0
@@ -52,7 +52,7 @@ function NRPTConfig(
         save_lps::Bool = false,
         record_samples::Bool = true,
         objective::PathObjective = SKLObjective(),
-        progress::Bool=true,
+        progress::Bool = true,
     ) where {T}
     return NRPTConfig{T, typeof(steps_per_round)}(
         x0,

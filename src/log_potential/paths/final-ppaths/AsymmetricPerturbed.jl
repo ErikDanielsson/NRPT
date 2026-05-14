@@ -4,7 +4,7 @@ mutable struct AsymmetricPerturbed{T <: AbstractVector{<:Real}} <: ParametrizedP
     backend::AbstractADType
 end
 
-AsymmetricPerturbed(backend::AbstractADType=AutoForwardDiff()) = AsymmetricPerturbed([-10.], nothing, backend)
+AsymmetricPerturbed(backend::AbstractADType = AutoForwardDiff()) = AsymmetricPerturbed([-10.0], nothing, backend)
 
 (path::AsymmetricPerturbed)(t, log_potentials::LP, β) where {LP <: AbstractVector{<:Real}} = begin
     V0, V1 = log_potentials

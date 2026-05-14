@@ -54,7 +54,7 @@ end
     dim = 2
     gbm = UniformGBM(dim)
     lik = BinomialLikelihood(1000, 500)
-    sp  = GBMProblem(gbm, lik)
+    sp = GBMProblem(gbm, lik)
 
     z = randn(dim)
     @test (NRPT.V0(sp, z) ≈ -0.5sum(abs2, z))
@@ -65,29 +65,29 @@ end
     n_chains = 10
     n_rounds = 12
     pal = palette(:RdBu, n_chains)
-    path    = ScalingGBMPath(3, LinearPath(), AutoForwardDiff())
+    path = ScalingGBMPath(3, LinearPath(), AutoForwardDiff())
     problem = PathProblem(sp, path, IterExplorer(SliceSampler(), 3))
-    result  = optimized_nrpt(
+    result = optimized_nrpt(
         make_x0(n_chains, dim), make_schedule(n_chains), problem,
         NoOptState(), 1;
         n_rounds = n_rounds, steps_per_round = n -> 2^n, record_samples = true
     )
     barrier = result.barriers[end](1.0)
     @test barrier > 0
-    p = density(NRPT.T(gbm, stack(get_round_samples(result.x, n_rounds * 2))[1, :, :]'), title="Barrier: $barrier", palette=pal)
+    p = density(NRPT.T(gbm, stack(get_round_samples(result.x, n_rounds * 2))[1, :, :]'), title = "Barrier: $barrier", palette = pal)
     savefig(p, "uniform_density_linear.png")
 
-    path    = ScalingGBMPath(3, LinearPath(), AutoForwardDiff())
+    path = ScalingGBMPath(3, LinearPath(), AutoForwardDiff())
     NRPT.set_param!(path, [10.0, 10.0])
     problem = PathProblem(sp, path, IterExplorer(SliceSampler(), 3))
-    result  = optimized_nrpt(
+    result = optimized_nrpt(
         make_x0(n_chains, dim), make_schedule(n_chains), problem,
         NoOptState(), 1;
         n_rounds = n_rounds, steps_per_round = n -> 2^n, record_samples = true
     )
     barrier = result.barriers[end](1.0)
     @test barrier > 0
-    p = density(NRPT.T(gbm, stack(get_round_samples(result.x, n_rounds * 2))[1, :, :]'), title="Barrier: $barrier", palette=pal)
+    p = density(NRPT.T(gbm, stack(get_round_samples(result.x, n_rounds * 2))[1, :, :]'), title = "Barrier: $barrier", palette = pal)
     savefig(p, "uniform_density_non_linear.png")
 
 end

@@ -172,7 +172,7 @@ function adapt_path!(
     t = extract_param(problem.path)
     l = loss(t)
 
-    prog = Progress(opt_state.max_steps; desc = "Newton trust region (autodiff)", offset = 7, enabled=progress)
+    prog = Progress(opt_state.max_steps; desc = "Newton trust region (autodiff)", offset = 7, enabled = progress)
     ProgressMeter.update!(
         prog, 0, force = true, showvalues = [
             ("objective", l),
@@ -182,7 +182,7 @@ function adapt_path!(
     g = DifferentiationInterface.gradient(loss, opt_state.backend, t)
     H = DifferentiationInterface.hessian(loss, opt_state.backend, t)
 
-        min_eig = minimum(eigvals(Symmetric(H)))
+    min_eig = minimum(eigvals(Symmetric(H)))
     @warn "$H"
     for n in 1:opt_state.max_steps
         if nan_grad(g) || any(isnan, H)

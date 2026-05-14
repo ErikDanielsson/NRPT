@@ -130,10 +130,10 @@ end
 
 const DEFAULT_λ_reg = 1.0e-3
 
-NewtonTrustRegionState(backend::AbstractADType; δ = 0.9, max_steps = 20, λ_reg = DEFAULT_λ_reg, prox=NoProx()) =
+NewtonTrustRegionState(backend::AbstractADType; δ = 0.9, max_steps = 20, λ_reg = DEFAULT_λ_reg, prox = NoProx()) =
     NewtonTrustRegionState(prox, backend, max_steps, Float64(λ_reg), Int[], Float64[], [], FixedrESSCriterion(δ))
 
-NewtonTrustRegionState(backend::AbstractADType, crit::ESSCriterion; max_steps=20, λ_reg=DEFAULT_λ_reg, prox=NoProx()) = 
+NewtonTrustRegionState(backend::AbstractADType, crit::ESSCriterion; max_steps = 20, λ_reg = DEFAULT_λ_reg, prox = NoProx()) =
     NewtonTrustRegionState(prox, backend, max_steps, Float64(λ_reg), Int[], Float64[], [], crit)
 
 # NewtonTrustRegionState(backend::AbstractADType; δ = 0.9, max_steps = 20, λ_reg = DEFAULT_λ_reg) =
@@ -179,8 +179,6 @@ function _min_ess(loss::ISSKLLoss{P, V, PT}, t) where {P, V, PT}
 end
 
 
-
-
 # Newton method with ESS-based backtracking line search.
 function adapt_path!(
         problem::PathProblem{<:SamplingProblem, P},
@@ -198,7 +196,7 @@ function adapt_path!(
     t = extract_param(problem.path)
     l = loss(t)
 
-    prog = Progress(opt_state.max_steps; desc = "Newton trust region (autodiff)", offset = 7, enabled=progress)
+    prog = Progress(opt_state.max_steps; desc = "Newton trust region (autodiff)", offset = 7, enabled = progress)
     ProgressMeter.update!(
         prog, 0, force = true, showvalues = [
             ("objective", l),

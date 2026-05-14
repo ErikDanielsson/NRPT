@@ -7,9 +7,9 @@ struct ConvexBernstein{C <: Val, V <: AbstractVector{<:Real}, M <: Union{Nothing
 end
 
 function laplacian(n::Int)
-    dl = ones(n - 2)        
-    d  = fill(-2.0, n - 1)  
-    du = ones(n - 2)        
+    dl = ones(n - 2)
+    d = fill(-2.0, n - 1)
+    du = ones(n - 2)
     return Tridiagonal(dl, d, du)
 end
 
@@ -23,9 +23,9 @@ end
 function cvx_coeffs(basis::BernsteinBasis, c0, cn, d)
     l = basis.l
     rhs = copy(d)
-    rhs[1]   -= c0
+    rhs[1] -= c0
     rhs[end] -= cn
-    c_interior = l \ rhs                  
+    c_interior = l \ rhs
     return c_interior
 end
 

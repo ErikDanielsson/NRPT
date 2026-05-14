@@ -7,8 +7,8 @@ struct BimodalLikelihood <: Likelihood
     σ::Float64
 end
 NRPT.loglik(l::BimodalLikelihood, x) = logaddexp(
-     -0.5 * sum(abs2, (x .+ l.μ) ./ l.σ),
-     -0.5 * sum(abs2, (x .- l.μ) ./ l.σ)
+    -0.5 * sum(abs2, (x .+ l.μ) ./ l.σ),
+    -0.5 * sum(abs2, (x .- l.μ) ./ l.σ)
 )
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -41,7 +41,7 @@ make_x0(n, dim) = [randn(dim) for _ in 1:n]
     dim = 1
     gbm = GaussianGBM(zeros(dim), Matrix(1.0I, dim, dim))
     lik = BimodalLikelihood(5.0, 0.1)
-    sp  = GBMProblem(gbm, lik)
+    sp = GBMProblem(gbm, lik)
 
     z = randn(dim)
     @test (NRPT.V0(sp, z) ≈ -0.5sum(abs2, z))
@@ -50,27 +50,31 @@ make_x0(n, dim) = [randn(dim) for _ in 1:n]
     @test length(NRPT.sample_iid(sp)) == dim
 
     n_chains = 20
-    path    = ScalingGBMPath(2, LinearPath(), AutoForwardDiff())
+    path = ScalingGBMPath(2, LinearPath(), AutoForwardDiff())
     problem = PathProblem(sp, path, IterExplorer(SliceSampler(), 5))
-    result  = optimized_nrpt(NRPTConfig(
-        make_x0(n_chains, dim), problem;
-        seed=1, n_rounds=10, steps_per_round = n -> 2^n, record_samples=true
-    ))
+    result = optimized_nrpt(
+        NRPTConfig(
+            make_x0(n_chains, dim), problem;
+            seed = 1, n_rounds = 10, steps_per_round = n -> 2^n, record_samples = true
+        )
+    )
     barrier = result.schedule_recorder.barriers[end](1.0)
     @test barrier > 0
-    p = density(stack(result.x.xs)[1, :, :]', title="Barrier: $barrier")
+    p = density(stack(result.x.xs)[1, :, :]', title = "Barrier: $barrier")
     savefig(p, "bimodal_density_linear.png")
 
-    path    = ScalingGBMPath(3, LinearPath(), AutoForwardDiff())
-    NRPT.set_param!(path, [10000., 10000.])
+    path = ScalingGBMPath(3, LinearPath(), AutoForwardDiff())
+    NRPT.set_param!(path, [10000.0, 10000.0])
     problem = PathProblem(sp, path, IterExplorer(SliceSampler(), 3))
-    result  = optimized_nrpt(NRPTConfig(
-        make_x0(n_chains, dim), problem;
-        seed=1, n_rounds=10, steps_per_round = n -> 2^n, record_samples=true
-    ))
+    result = optimized_nrpt(
+        NRPTConfig(
+            make_x0(n_chains, dim), problem;
+            seed = 1, n_rounds = 10, steps_per_round = n -> 2^n, record_samples = true
+        )
+    )
     barrier = result.schedule_recorder.barriers[end](1.0)
     @test barrier > 0
-    p = density(stack(result.x.xs)[1, :, :]', title="Barrier: $barrier")
+    p = density(stack(result.x.xs)[1, :, :]', title = "Barrier: $barrier")
     savefig(p, "bimodal_density_non_linear.png")
 
 end
