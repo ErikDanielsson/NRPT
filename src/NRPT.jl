@@ -18,7 +18,7 @@ export PathProblem, run_single_chain
 include("log_potential/sampling_problems.jl")
 export PosteriorProblem, GenericDistributionProblem, MvUnivariate
 export NormalProblem, exponents_to_params
-include("log_potential/sampling_problems/gaussian_base_measure.jl")
+include("log_potential/gaussian_base_measure.jl")
 export GBM, GBMProblem, GaussianGBM, UniformGBM, BoundedUniformGBM, Likelihood, loglik, GaussianLikelihood
 
 # Path types
