@@ -24,9 +24,9 @@ include("log_potential/paths.jl")
 export get_exponents, extract_params
 include("log_potential/paths/LinearPath.jl")
 export LinearPath
-nclude("log_potential/paths/PowerPath.jl")
+include("log_potential/paths/QPath.jl")
 export QPath
-nclude("log_potential/paths/SymmetricPerturbed.jl")
+include("log_potential/paths/SymmetricPerturbed.jl")
 export SymmetricPerturbed
 
 include("log_potential/paths/GBMPath.jl")
@@ -42,14 +42,16 @@ include("explorers/slice_sampler.jl")
 export SliceSampler
 include("explorers/iid_explorer.jl")
 export NormalIIDExplorer
-include("explorers/rejection_explorer.jl")
-export RejectionExplorer
 
 include("Chain.jl")
 include("PTChains.jl")
 
 # Optimization
-include("opt/stoch_opt.jl")
+include("opt/proximal_operators.jl")
+export ProximalState, NoProx, ProjectionState, LowerBound, Box
+include("opt/optimizers.jl")
+export ProximalStochOptState, NoOptState
+
 include("opt/SGD_variants/SGD.jl")
 export SGDState
 include("opt/SGD_variants/DoG.jl")
@@ -62,17 +64,19 @@ include("opt/SGD_variants/Adagrad.jl")
 export AdagradState
 include("opt/SGD_variants/ScaledAdagrad.jl")
 export ScaledAdagradState
-include("opt/proximal_operators.jl")
-export ProximalState, NoProx, ProjectionState, LowerBound, Box, SumConstraint, project
-include("opt/optimizers.jl")
-export ProximalStochOptState, NoOptState
-include("opt/objectives/trust_region.jl")
-include("opt/objectives/objectives.jl")
-include("opt/objectives/ISSAA-SKL.jl")
-export NewtonTrustRegionState, ESSCriterion, FixedrESSCriterion, DecayrESSCriterion
-include("opt/objectives/trust-region-autodiff-barrier.jl")
-include("opt/objectives/SGD-SKL.jl")
-include("opt/objectives/rejection-estimator.jl")
+
+
+
+include("opt/objectives.jl")
+include("opt/SAA/SNISSKLLoss.jl")
+include("opt/SAA/ESSCriterion.jl")
+export ESSCriterion, FixedrESSCriterion, DecayrESSCriterion
+include("opt/SAA/modified-newtons-method.jl")
+export NewtonTrustRegionState
+include("opt/SAA/ISSAA.jl")
+
+include("opt/SA/SGD-SKL.jl")
+include("opt/SA/rejection-estimator.jl")
 export SKLObjective, BarrierObjective, TrustRegionState, NewtonTrustRegionBarrierState
 include("opt/path_optimization.jl")
 
