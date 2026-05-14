@@ -17,12 +17,6 @@ end
 
 # ESS ratio: (Σ wᵢ)² / (n Σ wᵢ²), computed in log space for stability.
 # Equals 1 when all weights are equal, approaches 0 when one weight dominates.
-function ess_ratio(log_weights::Vector{Float64})
-    n = length(log_weights)
-    ls = logsumexp_(log_weights)
-    ls2 = logsumexp_(2 .* log_weights)
-    return exp(2ls - log(n) - ls2)
-end
 
 # IS-weighted SKL loss for one chain: L_n(φ) = Σᵢ w̃ᵢ J(φ, βₙ, eᵢ)
 function IS_SKL_loss_chain(

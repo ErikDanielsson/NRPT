@@ -23,7 +23,7 @@ function count_chain_round_trips(ind_proc::S, chain) where {S <: AbstractMatrix{
     return round_trips, inds
 end
 
-function round_trip_rate(ind_proc::S) where{S <: AbstractMatrix{<:Integer}}
+function round_trip_rate(ind_proc::S) where {S <: AbstractMatrix{<:Integer}}
     n_chains, iterations = size(ind_proc)
     return sum(count_chain_round_trips(ind_proc, i)[1] for i in 1:n_chains) / iterations
 end
@@ -43,7 +43,7 @@ end
 
 # Returns the iteration indices (column in proc) at which each round trip completes,
 # sorted ascending. Works on both Matrix{Int} and IndexProcess.
-function round_trip_completion_iters(ind_proc::S) where{S <: AbstractMatrix{<:Integer}}
+function round_trip_completion_iters(ind_proc::S) where {S <: AbstractMatrix{<:Integer}}
     n_chains = size(ind_proc, 1)
     iters = Int[]
     for i in 1:n_chains

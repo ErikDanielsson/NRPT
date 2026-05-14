@@ -6,8 +6,6 @@ using StaticArrays
 import DifferentiationInterface, BSplineKit, ForwardDiff
 
 include("helpers/misc.jl")
-include("helpers/polydecayaverager.jl")
-export cumavg
 include("helpers/bernsteinbasis.jl")
 export ConvexBernstein
 # Path problem
@@ -18,7 +16,7 @@ export PathProblem, run_single_chain
 include("log_potential/sampling_problems.jl")
 export PosteriorProblem, GenericDistributionProblem, MvUnivariate
 export NormalProblem, exponents_to_params
-include("log_potential/sampling_problems/gaussian_base_measure.jl")
+include("log_potential/gaussian_base_measure.jl")
 export GBM, GBMProblem, GaussianGBM, UniformGBM, BoundedUniformGBM, Likelihood, loglik, GaussianLikelihood
 
 # Path types
@@ -26,40 +24,14 @@ include("log_potential/paths.jl")
 export get_exponents, extract_params
 include("log_potential/paths/LinearPath.jl")
 export LinearPath
-include("log_potential/paths/PerturbedLinearPathNoProj.jl")
-export PerturbedLinearPath
-include("log_potential/paths/PerturbedLinearPathBidir.jl")
-export PerturbedLinearPathBidir
-include("log_potential/paths/ConstantPerturbedLinearPath.jl")
-export ConstantPerturbedLinearPath
-include("log_potential/paths/PowerPath.jl")
-export PowerPath
 include("log_potential/paths/QPath.jl")
 export QPath
-include("log_potential/paths/NonMonotonePath.jl")
-export NonMonotonePath
-include("log_potential/paths/PPathBump.jl")
-export PPathBump
-include("log_potential/paths/PPathQ.jl")
-export PPathQ
-include("log_potential/paths/final-ppaths/SymmetricPerturbed.jl")
-include("log_potential/paths/final-ppaths/AsymmetricPerturbed.jl")
-include("log_potential/paths/final-ppaths/AsymmetricTwoParams.jl")
-include("log_potential/paths/final-ppaths/AsymmetricTwoParamsNeg.jl")
-export SymmetricPerturbed, AsymmetricPerturbed, AsymmetricTwoParamPerturbed, AsymmetricTwoParamNegPerturbed
+include("log_potential/paths/SymmetricPerturbed.jl")
+export SymmetricPerturbed
 
 include("log_potential/paths/GBMPath.jl")
 export ScalingGBMPath
 
-
-
-include("log_potential/paths/spline-helpers.jl")
-include("log_potential/paths/PaperSplinePath.jl")
-export PaperSplinePath
-include("log_potential/paths/SplinePath.jl")
-export SplinePath
-include("log_potential/paths/SingleSplinePath.jl")
-export SingleSplinePath
 
 # Explorers
 include("explorers/iterexplorer.jl")
@@ -70,14 +42,16 @@ include("explorers/slice_sampler.jl")
 export SliceSampler
 include("explorers/iid_explorer.jl")
 export NormalIIDExplorer
-include("explorers/rejection_explorer.jl")
-export RejectionExplorer
 
 include("Chain.jl")
 include("PTChains.jl")
 
 # Optimization
-include("opt/stoch_opt.jl")
+include("opt/proximal_operators.jl")
+export ProximalState, NoProx, ProjectionState, LowerBound, Box
+include("opt/optimizers.jl")
+export ProximalStochOptState, NoOptState
+
 include("opt/SGD_variants/SGD.jl")
 export SGDState
 include("opt/SGD_variants/DoG.jl")
@@ -90,17 +64,19 @@ include("opt/SGD_variants/Adagrad.jl")
 export AdagradState
 include("opt/SGD_variants/ScaledAdagrad.jl")
 export ScaledAdagradState
-include("opt/proximal_operators.jl")
-export ProximalState, NoProx, ProjectionState, LowerBound, Box, SumConstraint, project
-include("opt/optimizers.jl")
-export ProximalStochOptState, NoOptState
-include("opt/objectives/trust_region.jl")
-include("opt/objectives/objectives.jl")
-include("opt/objectives/ISSAA-SKL.jl")
-export NewtonTrustRegionState, ESSCriterion, FixedrESSCriterion, DecayrESSCriterion
-include("opt/objectives/trust-region-autodiff-barrier.jl")
-include("opt/objectives/SGD-SKL.jl")
-include("opt/objectives/rejection-estimator.jl")
+
+
+
+include("opt/objectives.jl")
+include("opt/SAA/SNISSKLLoss.jl")
+include("opt/SAA/ESSCriterion.jl")
+export ESSCriterion, FixedrESSCriterion, DecayrESSCriterion
+include("opt/SAA/modified-newtons-method.jl")
+export NewtonTrustRegionState
+include("opt/SAA/ISSAA.jl")
+
+include("opt/SA/SGD-SKL.jl")
+include("opt/SA/rejection-estimator.jl")
 export SKLObjective, BarrierObjective, TrustRegionState, NewtonTrustRegionBarrierState
 include("opt/path_optimization.jl")
 

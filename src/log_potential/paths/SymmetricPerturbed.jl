@@ -4,7 +4,7 @@ mutable struct SymmetricPerturbed{T <: AbstractVector{<:Real}} <: ParametrizedPa
     backend::AbstractADType
 end
 
-SymmetricPerturbed(backend::AbstractADType=AutoForwardDiff()) = SymmetricPerturbed([-10., -10.], nothing, backend)
+SymmetricPerturbed(backend::AbstractADType = AutoForwardDiff()) = SymmetricPerturbed([-10.0, -10.0], nothing, backend)
 
 (path::SymmetricPerturbed)(t, log_potentials::LP, β) where {LP <: AbstractVector{<:Real}} = begin
     V0, V1 = log_potentials

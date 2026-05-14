@@ -99,8 +99,8 @@ function optimized_nrpt(config::NRPTConfig{T, S}) where {T, S}
     opt_cum_iters = 0
     opt_round_n = 0
     progress = config.progress
-    prog_beta = Progress(sum(schedule_iters); desc = "Schedule optimization", enabled=progress)
-    prog_opt = Progress(sum(opt_iters); desc = "Path optimization", offset = 2, enabled=progress)
+    prog_beta = Progress(sum(schedule_iters); desc = "Schedule optimization", enabled = progress)
+    prog_opt = Progress(sum(opt_iters); desc = "Path optimization", offset = 2, enabled = progress)
     ProgressMeter.update!(prog_beta, beta_cum_iters, force = true)
     ProgressMeter.update!(
         prog_opt, opt_cum_iters, force = true, showvalues = [
