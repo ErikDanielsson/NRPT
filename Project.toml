@@ -3,28 +3,39 @@ uuid = "9c128957-550d-4f07-a362-47a8f8429bf1"
 version = "1.0.0-DEV"
 authors = ["ErikDanielsson <danielsson.erik.0@gmail.com> and contributors"]
 
+[workspace]
+projects = ["examples", "cvx-splines", "excursion-experiments"]
+
 [deps]
 ADTypes = "47edcb42-4c32-4615-8424-f2b9edc5f35b"
+BSplineKit = "093aae92-e908-43d7-9660-e50ee39d5a0a"
+DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 DifferentiationInterface = "a0c0ee7d-e4b9-4e03-894e-1c5f64a51d63"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 LogExpFunctions = "2ab3a3ac-af41-5b50-aa03-7779005ae688"
-Mooncake = "da2b9cff-9c12-43a0-ae48-6db2b0edb7d6"
+OhMyThreads = "67456a42-1dca-4109-a031-0a68de7e3ad5"
 ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
 ADTypes = "1.21.0"
+BSplineKit = "0.19.2"
+DelimitedFiles = "1.9.1"
 DifferentiationInterface = ">= 0.6.0"
 Distributions = ">= 0.25.0"
+ForwardDiff = ">= 1.0.0"
 Interpolations = ">= 0.14.0"
 LinearAlgebra = ">= 1.12.0"
 LogExpFunctions = ">= 0.3.0"
-Mooncake = ">= 0.1.5"
+OhMyThreads = "0.8.5"
 ProgressMeter = "1.11.0"
 Random = ">= 1.11.0"
-julia = "1.10"
+StaticArrays = "1.9.18"
+julia = "1.12"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

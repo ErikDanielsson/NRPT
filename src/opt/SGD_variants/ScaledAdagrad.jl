@@ -21,6 +21,6 @@ function step!(x, g, state::ScaledAdagradState)
     # and some function of the parameter
     g = g ./ (abs.(g) + state.scaler.(x))
     state.acc_grad += g .^ 2
-	g_hat =  g ./ sqrt.(state.acc_grad .+ state.eps)
-	return (state.eta, g_hat)
+    g_hat = g ./ sqrt.(state.acc_grad .+ state.eps)
+    return (state.eta, g_hat)
 end

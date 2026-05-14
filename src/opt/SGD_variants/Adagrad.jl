@@ -19,7 +19,6 @@ end
 
 function step!(x, g, state::AdagradState)
     state.acc_grad += g .^ 2
-	g_hat = g ./ sqrt.(state.acc_grad .+ state.eps)
-	return (state.eta, g_hat)
+    g_hat = g ./ sqrt.(state.acc_grad .+ state.eps)
+    return (state.eta, g_hat)
 end
-
