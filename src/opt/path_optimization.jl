@@ -25,3 +25,15 @@ function adapt_path!(
     end
     return l
 end
+
+# Entrypoint to VISA implementation
+function adapt_path!(
+    problem::PathProblem{<:SamplingProblem, P},
+    ptchains::PTChains,
+    opt_state::NewtonTrustRegionState,
+    objective::PathObjective,
+    threaded::Bool,
+    progress::Bool
+) where {P <: ParametrizedPath}
+    return opt_SAA!(problem, ptchains, opt_state, objective, threaded, progress)
+end

@@ -175,7 +175,7 @@ end
 
 
 # Newton method with ESS-based backtracking line search.
-function adapt_path!(
+function opt_SAA!(
         problem::PathProblem{<:SamplingProblem, P},
         ptchains::PTChains,
         opt_state::NewtonTrustRegionState,
