@@ -6,8 +6,6 @@ using StaticArrays
 import DifferentiationInterface, BSplineKit, ForwardDiff
 
 include("helpers/misc.jl")
-include("helpers/polydecayaverager.jl")
-export cumavg
 include("helpers/bernsteinbasis.jl")
 export ConvexBernstein
 # Path problem
