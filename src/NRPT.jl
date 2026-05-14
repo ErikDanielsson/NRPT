@@ -26,39 +26,14 @@ include("log_potential/paths.jl")
 export get_exponents, extract_params
 include("log_potential/paths/LinearPath.jl")
 export LinearPath
-include("log_potential/paths/PerturbedLinearPathNoProj.jl")
-export PerturbedLinearPath
-include("log_potential/paths/PerturbedLinearPathBidir.jl")
-export PerturbedLinearPathBidir
-include("log_potential/paths/ConstantPerturbedLinearPath.jl")
-export ConstantPerturbedLinearPath
-include("log_potential/paths/PowerPath.jl")
-export PowerPath
-include("log_potential/paths/QPath.jl")
+nclude("log_potential/paths/PowerPath.jl")
 export QPath
-include("log_potential/paths/NonMonotonePath.jl")
-export NonMonotonePath
-include("log_potential/paths/PPathBump.jl")
-export PPathBump
-include("log_potential/paths/PPathQ.jl")
-export PPathQ
-include("log_potential/paths/final-ppaths/SymmetricPerturbed.jl")
-include("log_potential/paths/final-ppaths/AsymmetricPerturbed.jl")
-include("log_potential/paths/final-ppaths/AsymmetricTwoParams.jl")
-include("log_potential/paths/final-ppaths/AsymmetricTwoParamsNeg.jl")
-export SymmetricPerturbed, AsymmetricPerturbed, AsymmetricTwoParamPerturbed, AsymmetricTwoParamNegPerturbed
+nclude("log_potential/paths/SymmetricPerturbed.jl")
+export SymmetricPerturbed
 
 include("log_potential/paths/GBMPath.jl")
 export ScalingGBMPath
 
-
-include("log_potential/paths/spline-helpers.jl")
-include("log_potential/paths/PaperSplinePath.jl")
-export PaperSplinePath
-include("log_potential/paths/SplinePath.jl")
-export SplinePath
-include("log_potential/paths/SingleSplinePath.jl")
-export SingleSplinePath
 
 # Explorers
 include("explorers/iterexplorer.jl")
