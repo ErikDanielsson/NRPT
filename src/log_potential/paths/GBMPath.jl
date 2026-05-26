@@ -1,38 +1,38 @@
 abstract type GBMPath{C} <: ParametrizedPath{C} end
 
-mutable struct ScalingBaseMeasureChange{C <: Real} <: BaseMeasureChange
-    c::C
-end
+# mutable struct ScalingBaseMeasureChange{C <: Real} <: BaseMeasureChange
+#     c::C
+# end
 
-V0β(c::Real, gbm::GBM, z::AbstractVector) = V0β(c, V0(gbm, z))
-V0β(τ::Real, V0) = V0 * τ
-V0β(sbcm::ScalingBaseMeasureChange, gbm::GBM, z::AbstractVector) = V0β(sbcm.c, gbm, z)
-V0β(sbcm::ScalingBaseMeasureChange, V0) = V0β(sbcm.c, V0)
+V0β(c, gbm::G, z::V) where {G <: GBM, V <: AbstractVector} = V0β(c, V0(gbm, z))
+V0β(τ, V0) = V0 * τ
+# V0β(sbcm::ScalingBaseMeasureChange, gbm::G, z::V) where {G <: GBM, V <: AbstractVector} = V0β(sbcm.c, gbm, z)
+# V0β(sbcm::ScalingBaseMeasureChange, V0) = V0β(sbcm.c, V0)
 
-mutable struct ScalingGBMPath{C <: AbstractVector{<:Real}, P <: Path} <: GBMPath{C}
+mutable struct ScalingGBMPath{C <: AbstractVector{<:Real}, P <: Path, B <: ConvexBernstein} <: GBMPath{C}
     c::C
     path::P
-    basis::ConvexBernstein
+    basis::B
     prep
     backend::AbstractADType
 end
 
-function c_to_τ(path::ScalingGBMPath, c, β)
+function c_to_τ(path::ScalingGBMPath{C, P, B}, c::V, β::Float64) where {C <: AbstractVector{<:Real}, P <: Path, V <: AbstractVector, B <: ConvexBernstein}
     return exp(path.basis(c, β))
 end
 
-function c_to_τ(path::ScalingGBMPath, β)
+function c_to_τ(path::ScalingGBMPath{C, P}, β) where {C <: AbstractVector{<:Real}, P <: Path}
     return c_to_τ(path, path.c, β)
 end
 
-function get_τ0(path::ScalingGBMPath)
+function get_τ0(path::ScalingGBMPath{C, P}) where {C <: AbstractVector{<:Real}, P <: Path}
     return c_to_τ(path, 0.0)
 end
 
-function ScalingGBMPath(order::Int, endpoint::Bool, path::P, backend::AbstractADType) where {P <: Path}
-    basis, c0 = generate_basis_and_vector(order, endpoint)
+function ScalingGBMPath(order::Int, path::P, backend::AbstractADType) where {P <: Path}
+    basis, c0 = generate_basis_and_vector(order)
     c0[1] = 0.0
-    return ScalingGBMPath{Vector{Float64}, P}(c0, path, basis, nothing, backend)
+    return ScalingGBMPath{Vector{Float64}, P, typeof(basis)}(c0, path, basis, nothing, backend)
 end
 
 # # Convenience constructors without explicit type parameters
@@ -46,7 +46,7 @@ end
 # ── Callable: StaticPath case ────────────────────────────────────────────────
 # extract_param returns c::Float64; AD differentiates w.r.t. c only.
 function (path::ScalingGBMPath{C, <:StaticPath})(
-        c::AbstractVector, lps::AbstractVector{<:Real}, β
+        c, lps, β
     ) where {C}
     if β == 1.0
         return lps[2]
@@ -84,6 +84,8 @@ end
 function log_potential(path::ScalingGBMPath, lps::AbstractVector{<:Real}, β::Real)
     return path(extract_param(path), lps, β)
 end
+
+set_schedule!(path::ScalingGBMPath, schedule) = set_schedule!(path.basis, schedule)
 
 # ── Parameter accessors ──────────────────────────────────────────────────────
 extract_param(path::ScalingGBMPath{C, <:StaticPath}) where {C} = path.c

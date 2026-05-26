@@ -113,7 +113,8 @@ function min_ess(loss::SNISSKLLoss{P, V, PT}, t) where {P, V, PT}
         for j in 1:iterations
             beta = loss.ptchains.schedule[i]
             lps = base_potentials(loss.ptchains, i, j)
-            lp_buff[j] = loss.path(t, lps, beta) - loss.ref_lps[j, i]
+            lp_t = loss.path(t, lps, beta)
+            lp_buff[j] = lp_t - loss.ref_lps[j, i]
         end
         this_ress = relative_ess(lp_buff)
         min_ress = this_ress < min_ress ? this_ress : min_ress

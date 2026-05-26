@@ -27,6 +27,7 @@ function run_schedule_round!(
     Λ_β, new_schedule = make_schedule(r, schedule; use_accept = use_accept)
     record!(schedule_recorder, new_schedule, Λ_β, Λ_rej, Λ_acc)
     record_schedule!(logz_recorder, stepping_stone(lpsf), -stepping_stone(lpsb))
+    set_schedule!(problem.path, new_schedule)
 
     return new_schedule, Λ_rej, r
 end
@@ -59,6 +60,7 @@ function run_opt_round!(
         obj_val = adapt_path!(problem, chains, opt_state, objective, threaded, progress)
         # Do schedule adaptation with the samples instead
         _, new_schedule = make_schedule(r, schedule; use_accept = false)
+        set_schedule!(problem.path, new_schedule)
     end
     Λ_opt = compute_Λ(r, schedule; use_accept = false)
     record!(loss_recorder, Λ_opt, obj_val)
@@ -110,6 +112,7 @@ function optimized_nrpt(config::NRPTConfig{T, S}) where {T, S}
             ("ϕ", extract_reparam(config.problem.path)),
         ]
     )
+    set_schedule!(config.problem.path, schedule)
 
     for n in 1:config.n_rounds
         schedule, Λ_rej, r = run_schedule_round!(

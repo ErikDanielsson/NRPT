@@ -19,7 +19,6 @@ Base.length(g::GBM) = throw(MethodError(Base.length, (g,)))
 sample_iid(g::GBM) = randn(length(g))
 sample_iid!(::GBM, x) = randn!(x)
 
-# ── Abstract base-measure-change interface ───────────────────────────────────
 abstract type BaseMeasureChange end
 
 V0β(bmc::BaseMeasureChange, gbm::GBM, z::AbstractVector) =
@@ -27,7 +26,6 @@ V0β(bmc::BaseMeasureChange, gbm::GBM, z::AbstractVector) =
 V0β(bmc::BaseMeasureChange, V0::Real) =
     throw(MethodError(V0β, (bmc, V0)))
 
-# ── Abstract Likelihood interface ─────────────────────────────────────────────
 abstract type Likelihood end
 
 # Log-likelihood evaluated at x (must be overridden).
@@ -44,7 +42,6 @@ V1(p::GBMProblem, z) = V0(p, z) + loglik(p.l, T(p.m, z))
 sample_iid(p::GBMProblem) = sample_iid(p.m)
 sample_iid!(p::GBMProblem, x) = sample_iid!(p.m, x)
 
-# ── Concrete GBM types ────────────────────────────────────────────────────────
 
 """
     GaussianGBM(μ, L)

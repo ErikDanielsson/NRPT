@@ -43,8 +43,12 @@ function opt_modified_newton_trust_region(
         ]
     )
 
-    g = DifferentiationInterface.gradient(loss, opt_state.backend, t)
-    H = DifferentiationInterface.hessian(loss, opt_state.backend, t)
+    g_prep = DifferentiationInterface.prepare_gradient(loss, opt_state.backend, t)
+    H_prep = DifferentiationInterface.prepare_hessian(loss, opt_state.backend, t)
+
+
+    g = DifferentiationInterface.gradient(loss, g_prep, opt_state.backend, t)
+    H = DifferentiationInterface.hessian(loss, H_prep, opt_state.backend, t)
     min_eig = minimum(eigvals(Symmetric(H)))
 
     for n in 1:opt_state.max_steps
@@ -112,8 +116,8 @@ function opt_modified_newton_trust_region(
             ]
         )
         t = extract_param(problem.path)
-        g = DifferentiationInterface.gradient!(loss, g, opt_state.backend, t)
-        H = DifferentiationInterface.hessian!(loss, H, opt_state.backend, t)
+        g = DifferentiationInterface.gradient!(loss, g, g_prep, opt_state.backend, t)
+        H = DifferentiationInterface.hessian!(loss, H, H_prep, opt_state.backend, t)
     end
 
     push!(opt_state.n_steps, opt_state.max_steps)
