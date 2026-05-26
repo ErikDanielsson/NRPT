@@ -7,6 +7,8 @@ function base_potentials!(problem::SamplingProblem, x::T, lp_buff::LP) where {T,
 end
 abstract type Path end
 abstract type Explorer end
+
+set_schedule!(::Path, _) = nothing
 struct PathProblem{T <: SamplingProblem, P <: Path, E <: Explorer}
     problem::T
     path::P
