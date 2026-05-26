@@ -27,7 +27,7 @@ function make_colors()
     )
 end
 
-function make_name_map_all()
+function make_name_map()
     return Dict(
         "SKL-no_opt" => "Linear (original space)",
         "SKL-gbm-0" => "Linear (transformed space)",

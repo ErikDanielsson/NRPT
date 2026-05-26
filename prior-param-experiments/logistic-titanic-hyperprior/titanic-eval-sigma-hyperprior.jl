@@ -1,9 +1,9 @@
 using Distributions, StatsPlots, NRPT, Random, Colors
 using ForwardDiff, JLD2, LinearAlgebra, DifferentiationInterface
 
-include("../../examples/helpers/select-colors.jl")
-include("../../examples/helpers/create-optimizer-dict.jl")
-include("../../examples/helpers/plotting.jl")
+include("../helpers/select-colors.jl")
+include("../helpers/create-optimizer-dict.jl")
+include("../helpers/plotting.jl")
 include("titanic-model-hyperprior.jl")
 
 
