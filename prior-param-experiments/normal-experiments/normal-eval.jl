@@ -6,12 +6,6 @@ include("../helpers/create-optimizer-dict.jl")
 include("../helpers/plotting.jl")
 include("normal-model.jl")
 
-# Anneal between two concentrated, separated normal distributions:
-#   reference  D0 = N(0,       SIGMA²·I)
-#   target     D1 = N(MU·1,    SIGMA²·I)
-# Both are concentrated (small SIGMA) and separated (large MU).
-# Compare LinearPath baseline vs ScalingGBMPath of various Bernstein orders.
-
 const N_CHAINS = 32 
 const N_ROUNDS = 20
 const ORDERS = [0, 1, 2, 4] 
