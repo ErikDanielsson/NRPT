@@ -1,6 +1,6 @@
-# NRPT
+# M.Sc. scripts
 
-[![Build Status](https://github.com/ErikDanielsson/NRPT.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/ErikDanielsson/NRPT.jl/actions/workflows/CI.yml?query=branch%3Amain)
-
-Implementation of non-reverisble parallel tempering with path optimization
-For a production grade implementation please use [Pigeons.jl](https://pigeons.run/stable/).
+Various scripts used to produce the plots in my master's thesis. 
+The subdirectory `calibration/` contains scripts that reproduce the two plots from the calibration chapter of the thesis.
+The two subdirectories `perturbed-experiments/` and `prior-param-experiments/` contain the scripts used to generated the plots in the sections on perturbed linear paths and prior parameterized paths respecitively. 
+The `src/` directory contains the implementation of the non-reversible parallel tempering algorithm with path optimized used in the latter experiments.
